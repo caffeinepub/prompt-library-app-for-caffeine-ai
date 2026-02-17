@@ -1,12 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Allow users to rename and delete categories directly from the category badges list shown below the “Favorites” control.
+**Goal:** Persist categories per authenticated user in the backend and ensure they load automatically under “Favorites” on login, with correct create/rename/delete behavior end-to-end.
 
 **Planned changes:**
-- Add per-category rename and delete actions within the filter bar category badges area (below “Favorites”).
-- Implement category rename (name-only): update the categories list and update all prompts that reference the old category name to use the new name.
-- Implement category delete: remove the category from backend storage and categories list, and detach it from all prompts (without deleting prompts).
-- Ensure the UI handles active filter state cleanly when a selected category is renamed or deleted (update selection or clear it).
+- Backend: Store categories per authenticated user and return only that user’s categories on list calls; reject anonymous category CRUD consistently.
+- Backend: Align category CRUD semantics with frontend identity (category name strings), including rename propagation to all prompts and delete detaching from all prompts.
+- Backend: Persist prompts and categories across canister upgrades, including conditional migration if needed.
+- Frontend: On successful login, automatically fetch categories from the backend and render them under “Favorites,” with an explicit error state on backend connectivity failure.
+- Frontend: Add an always-available “Create category” entry directly below “Favorites,” prevent case-insensitive duplicates with an English message, and persist creation to the backend.
+- Frontend: Ensure create/rename/delete category actions invoke backend-backed sync actions and reflect success/failure in English while keeping UI consistent with backend responses.
 
-**User-visible outcome:** Users can rename or delete any category directly from the category badges under “Favorites”; renames and deletions are reflected everywhere immediately, and prompts are preserved with categories updated/removed accordingly.
+**User-visible outcome:** After logging in, users immediately see their own saved categories under “Favorites,” can create/rename/delete categories that persist across logout/login and upgrades, and receive clear English feedback on errors (including backend connectivity issues and duplicate category names).

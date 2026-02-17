@@ -10,11 +10,7 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface Category {
-  'id' : string,
-  'name' : string,
-  'description' : string,
-}
+export interface Category { 'name' : string, 'description' : string }
 export interface Prompt {
   'id' : string,
   'categories' : Array<string>,

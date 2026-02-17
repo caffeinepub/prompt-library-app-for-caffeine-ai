@@ -2,8 +2,8 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-provide-a-way-to-edit-rename-and-delete-categories-directly-from-the-category-list-displayed-below-the-favorites-control-the-category-badges-area-in-the-filter-bar",
-      "featureTitle": "Provide a way to edit (rename) and delete categories directly from the category list displayed below the \"Favorites\" control (the category badges area in the filter bar).",
+      "featureId": "feature-on-successful-login-automatically-load-categories-from-the-backend-and-render-them-immediately-below-the-favorites-control-in-the-category-ui",
+      "featureTitle": "On successful login, automatically load categories from the backend and render them immediately below the \"Favorites\" control in the category UI.",
       "files": [
         "frontend/src/App.tsx",
         "frontend/src/components/categories/CategoryFilterBar.tsx"
@@ -17,18 +17,17 @@
         "authorization@4.0.0"
       ],
       "testIds": [
-        "REQ-1"
+        "REQ-4"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-limit-category-editing-to-name-only-changes-and-persist-category-renames-end-to-end-update-the-categories-list-and-update-any-prompts-currently-using-the-category-so-they-reference-the-new-category-name",
-      "featureTitle": "Limit category editing to name-only changes, and persist category renames end-to-end: update the categories list and update any prompts currently using the category so they reference the new category name.",
+      "featureId": "feature-add-an-always-available-create-category-entry-directly-below-the-favorites-control-and-ensure-creating-a-category-persists-it-to-the-backend-for-the-current-user",
+      "featureTitle": "Add an always-available \"Create category\" entry directly below the \"Favorites\" control, and ensure creating a category persists it to the backend for the current user.",
       "files": [
         "frontend/src/App.tsx",
         "frontend/src/components/categories/CategoryFilterBar.tsx",
-        "frontend/src/features/backend/promptLibraryApi.ts",
-        "frontend/src/features/backend/usePromptLibrarySync.ts"
+        "frontend/src/features/backend/promptLibraryApi.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -39,17 +38,16 @@
         "authorization@4.0.0"
       ],
       "testIds": [
-        "REQ-2"
+        "REQ-5"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-when-deleting-a-category-detach-it-from-prompts-remove-that-category-from-each-prompt-s-categories-array-and-keep-the-prompts-themselves-then-remove-the-category-from-the-categories-list-and-backend-storage",
-      "featureTitle": "When deleting a category, detach it from prompts (remove that category from each prompt’s categories array) and keep the prompts themselves; then remove the category from the categories list and backend storage.",
+      "featureId": "feature-ensure-all-category-mutations-from-the-ui-create-rename-delete-call-the-backend-backed-sync-actions-so-the-backend-remains-the-source-of-truth-after-login",
+      "featureTitle": "Ensure all category mutations from the UI (create, rename, delete) call the backend-backed sync actions so the backend remains the source of truth after login.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/categories/CategoryFilterBar.tsx",
-        "frontend/src/features/backend/usePromptLibrarySync.ts"
+        "frontend/src/components/categories/CategoryPicker.tsx",
+        "frontend/src/components/categories/ManageCategoriesDialog.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -60,7 +58,7 @@
         "authorization@4.0.0"
       ],
       "testIds": [
-        "REQ-3"
+        "REQ-6"
       ],
       "confidence": "high"
     }

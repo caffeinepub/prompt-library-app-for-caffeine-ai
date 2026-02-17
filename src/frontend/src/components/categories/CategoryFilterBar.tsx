@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, Pencil, Trash2 } from 'lucide-react';
+import { Star, Pencil, Trash2, Check, X, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,8 +15,12 @@ interface CategoryFilterBarProps {
   showFavoritesOnly: boolean;
   onCategorySelect: (category: string | null) => void;
   onFavoritesToggle: () => void;
-  onCategoryRename?: (oldName: string, newName: string) => void;
-  onCategoryDelete?: (categoryName: string) => void;
+  onCategoryRename?: (oldName: string, newName: string) => Promise<void>;
+  onCategoryDelete?: (categoryName: string) => Promise<void>;
+  onCategoryCreate?: (categoryName: string) => Promise<void>;
+  backendReady?: boolean;
+  backendError?: boolean;
+  backendStatusMessage?: string;
 }
 
 export function CategoryFilterBar({
@@ -26,120 +30,145 @@ export function CategoryFilterBar({
   onFavoritesToggle,
   onCategoryRename,
   onCategoryDelete,
+  onCategoryCreate,
+  backendReady = true,
+  backendError = false,
+  backendStatusMessage,
 }: CategoryFilterBarProps) {
   const categories = useCategoryStore((state) => state.categories);
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renamingCategory, setRenamingCategory] = useState<string | null>(null);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [deleteConfirmCategory, setDeleteConfirmCategory] = useState<string | null>(null);
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createValue, setCreateValue] = useState('');
 
-  const handleCategoryClick = (category: string) => {
-    // Toggle category selection
-    if (selectedCategory === category) {
-      onCategorySelect(null);
-    } else {
-      onCategorySelect(category);
-    }
-  };
-
-  const handleRenameClick = (e: React.MouseEvent, category: string) => {
+  const handleRenameClick = (category: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setRenamingCategory(category);
-    setNewCategoryName(category);
+    setRenameValue(category);
     setRenameDialogOpen(true);
   };
 
-  const handleDeleteClick = (e: React.MouseEvent, category: string) => {
-    e.stopPropagation();
-    setDeleteConfirmCategory(category);
-  };
-
-  const handleRenameSubmit = () => {
-    if (!renamingCategory || !newCategoryName.trim()) return;
+  const handleRenameSubmit = async () => {
+    if (!renamingCategory || !renameValue.trim() || !onCategoryRename) return;
     
-    const trimmedName = newCategoryName.trim();
-    if (trimmedName === renamingCategory) {
-      setRenameDialogOpen(false);
-      return;
-    }
-
-    if (onCategoryRename) {
-      onCategoryRename(renamingCategory, trimmedName);
+    if (renameValue.trim() !== renamingCategory) {
+      await onCategoryRename(renamingCategory, renameValue.trim());
     }
     
     setRenameDialogOpen(false);
     setRenamingCategory(null);
-    setNewCategoryName('');
+    setRenameValue('');
   };
 
-  const handleDeleteConfirm = () => {
-    if (!deleteConfirmCategory) return;
-    
-    if (onCategoryDelete) {
-      onCategoryDelete(deleteConfirmCategory);
-    }
-    
-    setDeleteConfirmCategory(null);
+  const handleDeleteClick = (category: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeleteConfirm(category);
   };
+
+  const handleConfirmDelete = async () => {
+    if (deleteConfirm && onCategoryDelete) {
+      await onCategoryDelete(deleteConfirm);
+      setDeleteConfirm(null);
+    }
+  };
+
+  const handleCreateClick = () => {
+    setCreateValue('');
+    setCreateDialogOpen(true);
+  };
+
+  const handleCreateSubmit = async () => {
+    if (!createValue.trim() || !onCategoryCreate) return;
+    
+    await onCategoryCreate(createValue.trim());
+    setCreateDialogOpen(false);
+    setCreateValue('');
+  };
+
+  // Create paste handlers
+  const handleRenamePaste = createInputPasteHandler(setRenameValue, () => renameValue);
+  const handleCreatePaste = createInputPasteHandler(setCreateValue, () => createValue);
 
   return (
     <>
-      <div className="space-y-2">
-        <div className="flex gap-2">
+      <ScrollArea className="w-full">
+        <div className="flex items-center gap-2 pb-2">
+          {/* Favorites Toggle */}
           <Button
             variant={showFavoritesOnly ? 'default' : 'outline'}
             size="sm"
             onClick={onFavoritesToggle}
+            className="shrink-0"
           >
             <Star className={`h-4 w-4 mr-2 ${showFavoritesOnly ? 'fill-current' : ''}`} />
             Favorites
           </Button>
-        </div>
 
-        {categories.length > 0 && (
-          <ScrollArea className="w-full">
-            <div className="flex gap-2 pb-2">
-              {categories.map((category) => (
-                <div
-                  key={category}
-                  className="relative group"
-                  onMouseEnter={() => setHoveredCategory(category)}
-                  onMouseLeave={() => setHoveredCategory(null)}
-                >
-                  <Badge
-                    variant={selectedCategory === category ? 'default' : 'outline'}
-                    className="cursor-pointer hover:bg-primary/80 transition-colors pr-16"
-                    onClick={() => handleCategoryClick(category)}
-                  >
-                    {category}
-                  </Badge>
-                  {hoveredCategory === category && (
-                    <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 hover:bg-background/80"
-                        onClick={(e) => handleRenameClick(e, category)}
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 hover:bg-destructive/80 hover:text-destructive-foreground"
-                        onClick={(e) => handleDeleteClick(e, category)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
+          {/* Create Category Button */}
+          {onCategoryCreate && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCreateClick}
+              disabled={!backendReady}
+              className="shrink-0"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Category
+            </Button>
+          )}
+
+          {/* Backend Error State */}
+          {backendError && (
+            <div className="text-xs text-destructive px-2 py-1 bg-destructive/10 rounded">
+              Unable to load categories: {backendStatusMessage || 'Connection error'}
+            </div>
+          )}
+
+          {/* Category Badges */}
+          {categories.map((category) => (
+            <div
+              key={category}
+              className="relative"
+              onMouseEnter={() => setHoveredCategory(category)}
+              onMouseLeave={() => setHoveredCategory(null)}
+            >
+              <Badge
+                variant={selectedCategory === category ? 'default' : 'outline'}
+                className="cursor-pointer shrink-0 pr-8"
+                onClick={() => onCategorySelect(selectedCategory === category ? null : category)}
+              >
+                {category}
+              </Badge>
+              {hoveredCategory === category && (
+                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 bg-background/95 rounded px-1">
+                  {onCategoryRename && (
+                    <button
+                      onClick={(e) => handleRenameClick(category, e)}
+                      className="p-0.5 hover:bg-accent rounded"
+                      title="Rename category"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                  )}
+                  {onCategoryDelete && (
+                    <button
+                      onClick={(e) => handleDeleteClick(category, e)}
+                      className="p-0.5 hover:bg-destructive/10 text-destructive rounded"
+                      title="Delete category"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
                   )}
                 </div>
-              ))}
+              )}
             </div>
-          </ScrollArea>
-        )}
-      </div>
+          ))}
+        </div>
+      </ScrollArea>
 
       {/* Rename Dialog */}
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
@@ -147,26 +176,20 @@ export function CategoryFilterBar({
           <DialogHeader>
             <DialogTitle>Rename Category</DialogTitle>
             <DialogDescription>
-              Enter a new name for the category "{renamingCategory}".
+              Enter a new name for the category. All prompts using this category will be updated.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="category-name">Category Name</Label>
+              <Label htmlFor="rename-input">Category Name</Label>
               <Input
-                id="category-name"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                onPaste={createInputPasteHandler(
-                  (value) => setNewCategoryName(value),
-                  () => newCategoryName
-                )}
+                id="rename-input"
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                onPaste={handleRenamePaste}
                 placeholder="Enter category name"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleRenameSubmit();
-                  }
+                  if (e.key === 'Enter') handleRenameSubmit();
                 }}
               />
             </div>
@@ -175,20 +198,55 @@ export function CategoryFilterBar({
             <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleRenameSubmit} disabled={!newCategoryName.trim()}>
+            <Button onClick={handleRenameSubmit} disabled={!renameValue.trim()}>
               Rename
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Create Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Category</DialogTitle>
+            <DialogDescription>
+              Enter a name for the new category.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="create-input">Category Name</Label>
+              <Input
+                id="create-input"
+                value={createValue}
+                onChange={(e) => setCreateValue(e.target.value)}
+                onPaste={handleCreatePaste}
+                placeholder="Enter category name"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCreateSubmit();
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateSubmit} disabled={!createValue.trim()}>
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
       <ConfirmDialog
-        open={!!deleteConfirmCategory}
-        onOpenChange={(open) => !open && setDeleteConfirmCategory(null)}
+        open={!!deleteConfirm}
+        onOpenChange={(open) => !open && setDeleteConfirm(null)}
         title="Delete Category"
-        description={`Are you sure you want to delete the category "${deleteConfirmCategory}"? Prompts using this category will not be deleted, but the category will be removed from them.`}
-        onConfirm={handleDeleteConfirm}
+        description={`Are you sure you want to delete "${deleteConfirm}"? This will remove it from all prompts.`}
+        onConfirm={handleConfirmDelete}
       />
     </>
   );

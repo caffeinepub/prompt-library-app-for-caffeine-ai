@@ -1,35 +1,36 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Add category management to the app: allow users to edit (name only) and delete categories shown below the Favorites tab; deleting a category should detach items rather than delete them.",
+  "summary": "User-specific categories should be persisted in the backend, load automatically on login, and always display directly below \"Favorites\" (with create-category entry in that section), remaining visible unless deleted.",
   "architectural_notes": [
-    "Category delete must detach associated items (no cascading deletes).",
-    "Category edit supports renaming only; other item fields remain editable elsewhere."
+    "Categories are per-user (not global) and must be stored in backend; client should fetch/load categories on login and render them directly below \"Favorites\"."
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "On login, previously created categories are not appearing; categories need to persist per user and be loaded from backend."
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-provide-a-way-to-edit-rename-and-delete-categories-directly-from-the-category-list-displayed-below-the-favorites-control-the-category-badges-area-in-the-filter-bar",
-      "title": "Provide a way to edit (rename) and delete categories directly from the category list displayed below the \"Favorites\" control (the category badges area in the filter bar).",
+      "id": "feature-on-successful-login-automatically-load-categories-from-the-backend-and-render-them-immediately-below-the-favorites-control-in-the-category-ui",
+      "title": "On successful login, automatically load categories from the backend and render them immediately below the \"Favorites\" control in the category UI.",
       "reqIds": [
-        "REQ-1"
+        "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-limit-category-editing-to-name-only-changes-and-persist-category-renames-end-to-end-update-the-categories-list-and-update-any-prompts-currently-using-the-category-so-they-reference-the-new-category-name",
-      "title": "Limit category editing to name-only changes, and persist category renames end-to-end: update the categories list and update any prompts currently using the category so they reference the new category name.",
+      "id": "feature-add-an-always-available-create-category-entry-directly-below-the-favorites-control-and-ensure-creating-a-category-persists-it-to-the-backend-for-the-current-user",
+      "title": "Add an always-available \"Create category\" entry directly below the \"Favorites\" control, and ensure creating a category persists it to the backend for the current user.",
       "reqIds": [
-        "REQ-2"
+        "REQ-5"
       ],
       "version": 1
     },
     {
-      "id": "feature-when-deleting-a-category-detach-it-from-prompts-remove-that-category-from-each-prompt-s-categories-array-and-keep-the-prompts-themselves-then-remove-the-category-from-the-categories-list-and-backend-storage",
-      "title": "When deleting a category, detach it from prompts (remove that category from each prompt’s categories array) and keep the prompts themselves; then remove the category from the categories list and backend storage.",
+      "id": "feature-ensure-all-category-mutations-from-the-ui-create-rename-delete-call-the-backend-backed-sync-actions-so-the-backend-remains-the-source-of-truth-after-login",
+      "title": "Ensure all category mutations from the UI (create, rename, delete) call the backend-backed sync actions so the backend remains the source of truth after login.",
       "reqIds": [
-        "REQ-3"
+        "REQ-6"
       ],
       "version": 1
     }
@@ -37,8 +38,32 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Enable editing (name only) and deleting categories shown below the Favorites tab; deleting a category detaches items and keeps them.",
+      "summary": "Persist per-user categories in backend and auto-load/display them under \"Favorites\" immediately on login (remain until deleted; include create-category entry below Favorites).",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Ensure categories are persisted per authenticated user in the backend and are returned for that same user after logging out and logging back in.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Fix backend category CRUD semantics so that category identity used by the frontend (category name strings) matches backend storage and prompt detaching/renaming logic end-to-end.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Persist backend state across canister upgrades for per-user prompts and categories so that user-created categories are not lost after deployment upgrades.",
+      "reqIds": [
+        "REQ-3"
+      ],
       "status": "pending"
     }
   ],

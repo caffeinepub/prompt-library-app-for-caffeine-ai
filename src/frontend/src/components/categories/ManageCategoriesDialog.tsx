@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
 import { useCategoryStore } from '../../features/categories/categoryStore';
 import { usePromptStore } from '../../features/prompts/promptStore';
 import { usePromptLibrarySync } from '../../features/backend/usePromptLibrarySync';
@@ -48,7 +49,28 @@ export function ManageCategoriesDialog({ open, onOpenChange }: ManageCategoriesD
     if (!editingCategory || !editValue.trim()) return;
     
     if (editValue.trim() !== editingCategory) {
-      await renameCategory(editingCategory, editValue.trim());
+      // Check for case-insensitive duplicates (excluding the current category)
+      const normalizedNewName = editValue.trim().toLowerCase();
+      const normalizedOldName = editingCategory.toLowerCase();
+      
+      if (normalizedNewName !== normalizedOldName) {
+        const isDuplicate = categories.some(cat => 
+          cat.toLowerCase() === normalizedNewName && cat.toLowerCase() !== normalizedOldName
+        );
+        
+        if (isDuplicate) {
+          toast.error('A category with this name already exists');
+          return;
+        }
+      }
+
+      try {
+        await renameCategory(editingCategory, editValue.trim());
+        toast.success('Category renamed successfully');
+      } catch (error) {
+        // Error already shown by sync hook
+        return;
+      }
     }
     
     setEditingCategory(null);
@@ -63,7 +85,12 @@ export function ManageCategoriesDialog({ open, onOpenChange }: ManageCategoriesD
   const handleConfirmDelete = async () => {
     if (!deleteConfirm) return;
     
-    await deleteCategory(deleteConfirm.category);
+    try {
+      await deleteCategory(deleteConfirm.category);
+      toast.success('Category deleted successfully');
+    } catch (error) {
+      // Error already shown by sync hook
+    }
     setDeleteConfirm(null);
   };
 
@@ -85,7 +112,7 @@ export function ManageCategoriesDialog({ open, onOpenChange }: ManageCategoriesD
             <div className="space-y-2">
               {categories.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  No categories yet. Create one when adding a prompt.
+                  No categories yet. Create one using the "Create Category" button.
                 </p>
               ) : (
                 categories.map((category) => (

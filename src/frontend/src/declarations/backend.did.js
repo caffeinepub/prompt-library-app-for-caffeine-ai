@@ -14,7 +14,6 @@ export const UserRole = IDL.Variant({
   'guest' : IDL.Null,
 });
 export const Category = IDL.Record({
-  'id' : IDL.Text,
   'name' : IDL.Text,
   'description' : IDL.Text,
 });
@@ -61,11 +60,7 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
-  const Category = IDL.Record({
-    'id' : IDL.Text,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-  });
+  const Category = IDL.Record({ 'name' : IDL.Text, 'description' : IDL.Text });
   const Prompt = IDL.Record({
     'id' : IDL.Text,
     'categories' : IDL.Vec(IDL.Text),

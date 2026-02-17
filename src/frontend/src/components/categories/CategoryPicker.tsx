@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
 import { useCategoryStore } from '../../features/categories/categoryStore';
+import { usePromptLibrarySync } from '../../features/backend/usePromptLibrarySync';
 import { createInputPasteHandler } from '../../features/paste/cleanPasteHandlers';
 
 interface CategoryPickerProps {
@@ -14,41 +16,9 @@ interface CategoryPickerProps {
 }
 
 export function CategoryPicker({ selectedCategories, onCategoriesChange }: CategoryPickerProps) {
-  const [newCategoryName, setNewCategoryName] = useState('');
   const categories = useCategoryStore((state) => state.categories);
-  const addCategory = useCategoryStore((state) => state.addCategory);
-
-  const handleAddCategory = () => {
-    const trimmed = newCategoryName.trim();
-    if (!trimmed) return;
-    
-    // Check if category already exists (case-insensitive)
-    const exists = categories.some(
-      cat => cat.toLowerCase() === trimmed.toLowerCase()
-    );
-    
-    if (exists) {
-      // Find the existing category with correct casing
-      const existingCategory = categories.find(
-        cat => cat.toLowerCase() === trimmed.toLowerCase()
-      );
-      
-      // Select it if not already selected
-      if (existingCategory && !selectedCategories.includes(existingCategory)) {
-        onCategoriesChange([...selectedCategories, existingCategory]);
-      }
-    } else {
-      // Add new category to store
-      addCategory(trimmed);
-      
-      // Select the new category (avoid duplicates in selection)
-      if (!selectedCategories.some(cat => cat.toLowerCase() === trimmed.toLowerCase())) {
-        onCategoriesChange([...selectedCategories, trimmed]);
-      }
-    }
-    
-    setNewCategoryName('');
-  };
+  const { saveCategory } = usePromptLibrarySync();
+  const [newCategory, setNewCategory] = useState('');
 
   const handleToggleCategory = (category: string) => {
     if (selectedCategories.includes(category)) {
@@ -58,16 +28,39 @@ export function CategoryPicker({ selectedCategories, onCategoriesChange }: Categ
     }
   };
 
+  const handleAddCategory = async () => {
+    const trimmed = newCategory.trim();
+    if (!trimmed) return;
+
+    // Check for case-insensitive duplicates
+    const normalizedName = trimmed.toLowerCase();
+    const isDuplicate = categories.some(cat => cat.toLowerCase() === normalizedName);
+    
+    if (isDuplicate) {
+      toast.error('A category with this name already exists');
+      return;
+    }
+
+    try {
+      await saveCategory(trimmed);
+      onCategoriesChange([...selectedCategories, trimmed]);
+      setNewCategory('');
+      toast.success('Category created successfully');
+    } catch (error) {
+      // Error already shown by sync hook
+    }
+  };
+
   // Create paste handler for new category input
-  const handlePaste = createInputPasteHandler(setNewCategoryName, () => newCategoryName);
+  const handlePaste = createInputPasteHandler(setNewCategory, () => newCategory);
 
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
         <Input
           placeholder="New category name"
-          value={newCategoryName}
-          onChange={(e) => setNewCategoryName(e.target.value)}
+          value={newCategory}
+          onChange={(e) => setNewCategory(e.target.value)}
           onPaste={handlePaste}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -76,15 +69,20 @@ export function CategoryPicker({ selectedCategories, onCategoriesChange }: Categ
             }
           }}
         />
-        <Button type="button" onClick={handleAddCategory} size="icon">
-          <Plus className="h-4 w-4" />
+        <Button type="button" onClick={handleAddCategory} size="sm">
+          <Plus className="h-4 w-4 mr-1" />
+          Add
         </Button>
       </div>
 
-      {categories.length > 0 && (
-        <ScrollArea className="h-48 rounded-md border p-4">
-          <div className="space-y-2">
-            {categories.map((category) => (
+      <ScrollArea className="h-[200px] rounded-md border p-4">
+        <div className="space-y-2">
+          {categories.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No categories yet. Create one above.
+            </p>
+          ) : (
+            categories.map((category) => (
               <div key={category} className="flex items-center space-x-2">
                 <Checkbox
                   id={`category-${category}`}
@@ -98,10 +96,10 @@ export function CategoryPicker({ selectedCategories, onCategoriesChange }: Categ
                   {category}
                 </Label>
               </div>
-            ))}
-          </div>
-        </ScrollArea>
-      )}
+            ))
+          )}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

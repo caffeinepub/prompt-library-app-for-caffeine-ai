@@ -21,7 +21,6 @@ actor {
   };
 
   type Category = {
-    id : Text;
     name : Text;
     description : Text;
   };
@@ -39,7 +38,7 @@ actor {
   let usersData = Map.empty<Principal, UserData>();
   let userProfiles = Map.empty<Principal, UserProfile>();
 
-  // Mixin for authorization
+  // Mixin for authorization state
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
@@ -136,7 +135,7 @@ actor {
     };
 
     let userData = getOrCreateUserData(caller);
-    userData.categories.add(category.id, category);
+    userData.categories.add(category.name, category);
   };
 
   public shared ({ caller }) func updateCategoryName(oldName : Text, newName : Text) : async () {
@@ -152,7 +151,6 @@ actor {
       case (?category) {
         // Update the category name
         let updatedCategory = {
-          id = category.id;
           name = newName;
           description = category.description;
         };
@@ -189,14 +187,14 @@ actor {
     };
   };
 
-  public query ({ caller }) func getCategory(categoryId : Text) : async ?Category {
+  public query ({ caller }) func getCategory(categoryName : Text) : async ?Category {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can fetch categories");
     };
 
     switch (getUserData(caller)) {
       case (null) { null };
-      case (?userData) { userData.categories.get(categoryId) };
+      case (?userData) { userData.categories.get(categoryName) };
     };
   };
 
@@ -211,7 +209,7 @@ actor {
     };
   };
 
-  public shared ({ caller }) func deleteCategory(categoryId : Text) : async () {
+  public shared ({ caller }) func deleteCategory(categoryName : Text) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can delete categories");
     };
@@ -222,8 +220,8 @@ actor {
     let prompts = userData.prompts;
     for ((id, prompt) in prompts.entries()) {
       let filteredCategories = List.fromArray(prompt.categories).filter(
-        func(categoryName) {
-          categoryName != categoryId;
+        func(categoryName_2) {
+          categoryName_2 != categoryName;
         }
       ).toArray();
 
@@ -240,7 +238,7 @@ actor {
     };
 
     // Remove category
-    userData.categories.remove(categoryId);
+    userData.categories.remove(categoryName);
   };
 
   // Search functionality

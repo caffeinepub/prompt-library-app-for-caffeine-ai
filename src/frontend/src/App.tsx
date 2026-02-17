@@ -51,6 +51,7 @@ function App() {
   const prompts = usePromptStore((state) => state.prompts);
   const toggleFavorite = usePromptStore((state) => state.toggleFavorite);
   const clearPrompts = usePromptStore((state) => state.clearPrompts);
+  const categories = useCategoryStore((state) => state.categories);
   const clearCategories = useCategoryStore((state) => state.clearCategories);
 
   // Backend sync and connectivity status
@@ -60,6 +61,7 @@ function App() {
     connectivityError,
     savePrompt, 
     deletePrompt: deletePromptBackend,
+    saveCategory,
     renameCategory: renameCategoryBackend,
     deleteCategory: deleteCategoryBackend,
     refreshFromBackend 
@@ -243,7 +245,41 @@ function App() {
     }
   };
 
+  const handleCategoryCreate = async (categoryName: string) => {
+    // Check for case-insensitive duplicates
+    const normalizedName = categoryName.toLowerCase().trim();
+    const isDuplicate = categories.some(cat => cat.toLowerCase().trim() === normalizedName);
+    
+    if (isDuplicate) {
+      toast.error('A category with this name already exists');
+      throw new Error('Duplicate category name');
+    }
+
+    try {
+      await saveCategory(categoryName);
+      toast.success('Category created successfully');
+    } catch (error) {
+      // Error already shown by sync hook or above
+      throw error;
+    }
+  };
+
   const handleCategoryRename = async (oldName: string, newName: string) => {
+    // Check for case-insensitive duplicates (excluding the current category)
+    const normalizedNewName = newName.toLowerCase().trim();
+    const normalizedOldName = oldName.toLowerCase().trim();
+    
+    if (normalizedNewName !== normalizedOldName) {
+      const isDuplicate = categories.some(cat => 
+        cat.toLowerCase().trim() === normalizedNewName && cat.toLowerCase().trim() !== normalizedOldName
+      );
+      
+      if (isDuplicate) {
+        toast.error('A category with this name already exists');
+        throw new Error('Duplicate category name');
+      }
+    }
+
     try {
       await renameCategoryBackend(oldName, newName);
       toast.success('Category renamed successfully');
@@ -253,7 +289,8 @@ function App() {
         setSelectedCategory(newName);
       }
     } catch (error) {
-      // Error already shown by sync hook
+      // Error already shown by sync hook or above
+      throw error;
     }
   };
 
@@ -268,6 +305,7 @@ function App() {
       }
     } catch (error) {
       // Error already shown by sync hook
+      throw error;
     }
   };
 
@@ -336,8 +374,12 @@ function App() {
               showFavoritesOnly={showFavoritesOnly}
               onCategorySelect={handleCategorySelect}
               onFavoritesToggle={handleFavoritesToggle}
+              onCategoryCreate={handleCategoryCreate}
               onCategoryRename={handleCategoryRename}
               onCategoryDelete={handleCategoryDelete}
+              backendReady={backendReady}
+              backendError={backendError}
+              backendStatusMessage={backendStatusMessage}
             />
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

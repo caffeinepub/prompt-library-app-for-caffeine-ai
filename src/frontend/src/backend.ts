@@ -101,7 +101,6 @@ export interface UserProfile {
     name: string;
 }
 export interface Category {
-    id: string;
     name: string;
     description: string;
 }
@@ -114,13 +113,13 @@ export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     backendConnectivityCheck(): Promise<void>;
-    deleteCategory(categoryId: string): Promise<void>;
+    deleteCategory(categoryName: string): Promise<void>;
     deletePrompt(promptId: string): Promise<void>;
     getAllCategories(): Promise<Array<Category>>;
     getAllPrompts(): Promise<Array<Prompt>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    getCategory(categoryId: string): Promise<Category | null>;
+    getCategory(categoryName: string): Promise<Category | null>;
     getPrompt(promptId: string): Promise<Prompt | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;

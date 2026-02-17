@@ -1,58 +1,77 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T23:31:50.306Z",
+  "generatedAt": "2026-02-17T23:54:25.043Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
+    "total": 6,
     "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Provide a way to edit (rename) and delete categories directly from the category list displayed below the \"Favorites\" control (the category badges area in the filter bar).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/categories/CategoryFilterBar.tsx",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/categories/CategoryFilterBar.tsx",
-          "frontend/src/App.tsx"
-        ]
+        "summary": "Ensure categories are persisted per authenticated user in the backend and are returned for that same user after logging out and logging back in.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Limit category editing to name-only changes, and persist category renames end-to-end: update the categories list and update any prompts currently using the category so they reference the new category name.",
+        "summary": "Fix backend category CRUD semantics so that category identity used by the frontend (category name strings) matches backend storage and prompt detaching/renaming logic end-to-end.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Persist backend state across canister upgrades for per-user prompts and categories so that user-created categories are not lost after deployment upgrades.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-4",
+        "summary": "On successful login, automatically load categories from the backend and render them immediately below the \"Favorites\" control in the category UI.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/features/backend/promptLibraryApi.ts",
-          "frontend/src/features/backend/usePromptLibrarySync.ts",
           "frontend/src/App.tsx",
-          "frontend/src/components/categories/CategoryFilterBar.tsx"
+          "frontend/src/components/categories/CategoryFilterBar.tsx",
+          "frontend/src/features/backend/usePromptLibrarySync.ts"
         ],
         "matchedFiles": [
-          "frontend/src/features/backend/promptLibraryApi.ts",
-          "frontend/src/features/backend/usePromptLibrarySync.ts",
           "frontend/src/App.tsx",
           "frontend/src/components/categories/CategoryFilterBar.tsx"
         ]
       },
       {
-        "id": "REQ-3",
-        "summary": "When deleting a category, detach it from prompts (remove that category from each prompt’s categories array) and keep the prompts themselves; then remove the category from the categories list and backend storage.",
+        "id": "REQ-5",
+        "summary": "Add an always-available \"Create category\" entry directly below the \"Favorites\" control, and ensure creating a category persists it to the backend for the current user.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/categories/CategoryFilterBar.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/features/backend/promptLibraryApi.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/categories/CategoryFilterBar.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/features/backend/promptLibraryApi.ts"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Ensure all category mutations from the UI (create, rename, delete) call the backend-backed sync actions so the backend remains the source of truth after login.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/features/backend/usePromptLibrarySync.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/components/categories/CategoryFilterBar.tsx"
+          "frontend/src/components/categories/ManageCategoriesDialog.tsx",
+          "frontend/src/components/categories/CategoryPicker.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/features/backend/usePromptLibrarySync.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/components/categories/CategoryFilterBar.tsx"
+          "frontend/src/components/categories/ManageCategoriesDialog.tsx",
+          "frontend/src/components/categories/CategoryPicker.tsx"
         ]
       }
     ]
@@ -68,10 +87,11 @@
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
     "frontend/src/components/categories/CategoryFilterBar.tsx",
+    "frontend/src/components/categories/CategoryPicker.tsx",
+    "frontend/src/components/categories/ManageCategoriesDialog.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
     "frontend/src/features/backend/promptLibraryApi.ts",
-    "frontend/src/features/backend/usePromptLibrarySync.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

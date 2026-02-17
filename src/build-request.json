@@ -1,77 +1,145 @@
 {
   "kind": "build_request",
-  "title": "Add edit/delete for categories shown below Favorites",
+  "title": "Persist per-user categories in backend and load them under Favorites on login",
   "projectName": "Prompt Library",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Provide a way to edit (rename) and delete categories directly from the category list displayed below the \"Favorites\" control (the category badges area in the filter bar).",
-      "target": "frontend",
+      "text": "Ensure categories are persisted per authenticated user in the backend and are returned for that same user after logging out and logging back in.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-6",
-          "msg-8"
+          "msg-5",
+          "msg-6"
         ],
         "quotes": [
-          "It works perfect! Now I need to be able to delete or edit the categories.",
-          "1) Below the favorite tab."
+          "Maybe make a create category below the \"Favorites\" - but every user has to make their own categories. But once made they should always show unless deleted.",
+          "Backend."
         ]
       },
       "acceptanceCriteria": [
-        "When categories are visible under the Favorites control, the user can initiate rename and delete actions from that same area (without needing to navigate elsewhere).",
-        "Rename and delete actions are available for each category shown in the filter bar."
+        "When a signed-in user creates categories, logs out, and logs back in, calling the backend categories list returns the previously created categories for that user.",
+        "Categories created by User A do not appear for User B.",
+        "Backend rejects category CRUD calls from anonymous callers consistently (no silent failures)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Limit category editing to name-only changes, and persist category renames end-to-end: update the categories list and update any prompts currently using the category so they reference the new category name.",
-      "target": "both",
+      "text": "Fix backend category CRUD semantics so that category identity used by the frontend (category name strings) matches backend storage and prompt detaching/renaming logic end-to-end.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-8"
+          "msg-5",
+          "msg-6"
         ],
         "quotes": [
-          "2) Just the category, everything else is editable."
+          "But once made they should always show unless deleted.",
+          "Backend."
         ]
       },
       "acceptanceCriteria": [
-        "Renaming a category changes only its name (no other prompt fields are modified).",
-        "After rename completes, prompts that previously contained the old category name now contain the new category name.",
-        "After rename completes, the old category no longer appears in the categories list and the new category does appear.",
-        "If the renamed category was currently selected as a filter, the UI transitions cleanly (e.g., selection updates to the new name or clears selection) without errors."
+        "Renaming a category updates the stored category entry and updates every prompt that references the old category name so it references the new category name.",
+        "Deleting a category detaches it from all prompts by removing that category name from each prompt’s categories array, keeps the prompts, and removes the category from backend storage.",
+        "After rename/delete, subsequent getAllCategories returns the updated category name list with no stale entries."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "When deleting a category, detach it from prompts (remove that category from each prompt’s categories array) and keep the prompts themselves; then remove the category from the categories list and backend storage.",
-      "target": "both",
+      "text": "Persist backend state across canister upgrades for per-user prompts and categories so that user-created categories are not lost after deployment upgrades.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-8"
+          "msg-5"
         ],
         "quotes": [
-          "3) No, nothing else should be linked to it. Detach the items and keep them."
+          "But once made they should always show unless deleted."
         ]
       },
       "acceptanceCriteria": [
-        "Deleting a category does not delete any prompts.",
-        "After deletion, prompts that had the deleted category no longer include it in their categories list.",
-        "After deletion, the category no longer appears in the categories list (including the filter bar).",
-        "If the deleted category was currently selected as a filter, the selection is cleared automatically."
+        "After a canister upgrade, existing users’ prompts and categories are still present.",
+        "If a migration is needed for existing stored data, it runs conditionally and does not corrupt user data."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "On successful login, automatically load categories from the backend and render them immediately below the \"Favorites\" control in the category UI.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4",
+          "msg-5"
+        ],
+        "quotes": [
+          "Works great but when I log in to the app the categories are not there. I want the categories that have been created to always show below \"Favorites\"",
+          "Immediately on login, if they have been created already."
+        ]
+      },
+      "acceptanceCriteria": [
+        "After login completes and backend connectivity succeeds, the UI shows the user’s categories under the Favorites control without requiring a manual refresh.",
+        "If the backend returns categories, the categories list in the UI matches the backend list (including after a full page reload).",
+        "If backend connectivity fails, the UI displays an error state and does not misleadingly show an empty categories list as if no categories exist."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Add an always-available \"Create category\" entry directly below the \"Favorites\" control, and ensure creating a category persists it to the backend for the current user.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-5"
+        ],
+        "quotes": [
+          "Maybe make a create category below the \"Favorites\""
+        ]
+      },
+      "acceptanceCriteria": [
+        "The category UI includes a clear create-category control placed directly below Favorites.",
+        "Creating a category updates the UI immediately and persists the new category to the backend; after logout/login it still appears.",
+        "Attempting to create a duplicate category (case-insensitive) is prevented with a user-facing message in English."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Ensure all category mutations from the UI (create, rename, delete) call the backend-backed sync actions so the backend remains the source of truth after login.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-5",
+          "msg-6"
+        ],
+        "quotes": [
+          "But once made they should always show unless deleted.",
+          "Backend."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Create/rename/delete category actions from the category UI trigger backend calls and reflect success/failure to the user in English.",
+        "After any category mutation, the categories shown below Favorites remain consistent with the backend response (including after refreshFromBackend)."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Do not edit files under frontend/src/components/ui or other immutablePaths; compose existing UI components instead."
+    "Backend must remain a single Motoko actor in backend/main.mo.",
+    "Do not edit files under frontend/src/components/ui or the immutable hook paths listed in SYSTEM_CONTEXT; compose them instead."
   ],
   "nonGoals": [
-    "Adding additional category fields beyond name (e.g., description editing UI).",
-    "Deleting prompts as a side effect of deleting a category."
+    "Global (shared) categories across users.",
+    "Third-party authentication providers other than Internet Identity.",
+    "Real-time syncing between multiple sessions/devices beyond loading on login and explicit refresh."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

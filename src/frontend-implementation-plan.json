@@ -1,84 +1,82 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Inline rename/delete controls for category badges in filter bar",
+  "title": "Load and manage per-user categories under Favorites after login (frontend)",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Add rename and delete actions directly on each category badge in the filter bar under Favorites.",
+      "id": "REQ-4",
+      "summary": "After successful login and backend connectivity, load categories and render them under the Favorites control with clear error handling on connectivity failure.",
       "acceptanceCriteria": [
-        "When categories are visible under the Favorites control, the user can initiate rename and delete actions from that same area (without needing to navigate elsewhere).",
-        "Rename and delete actions are available for each category shown in the filter bar."
+        "After login completes and backend connectivity succeeds, the UI shows the user’s categories under the Favorites control without requiring a manual refresh.",
+        "If the backend returns categories, the categories list in the UI matches the backend list (including after a full page reload).",
+        "If backend connectivity fails, the UI displays an error state and does not misleadingly show an empty categories list as if no categories exist."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Pass backend connectivity/loading/error state (from usePromptLibrarySync/useBackendActorStatus) into the category UI so it can render an explicit 'unable to load categories' state under Favorites when connectivity fails. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/categories/CategoryFilterBar.tsx",
+          "operation": "modify",
+          "description": "Render categories directly below the Favorites control, and add a visible inline error/blocked state under Favorites when backend connectivity is in error (instead of silently showing no categories). Use shadcn-ui primitives already in use (Button/Badge/ScrollArea/Dialog/Input/Label) to keep styling consistent. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
+          "operation": "modify",
+          "description": "Ensure initial data load sets categories into the store only after connectivity succeeds, and keep connectivityStatus/connectivityError surfaced for UI error states (no UI changes here)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Add an always-available Create category control directly below Favorites and persist new categories to the backend for the current user with duplicate prevention messaging.",
+      "acceptanceCriteria": [
+        "The category UI includes a clear create-category control placed directly below Favorites.",
+        "Creating a category updates the UI immediately and persists the new category to the backend; after logout/login it still appears.",
+        "Attempting to create a duplicate category (case-insensitive) is prevented with a user-facing message in English."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/categories/CategoryFilterBar.tsx",
           "operation": "modify",
-          "description": "Enhance the category badges row to include per-category edit (rename) and delete affordances directly in the badge area (e.g., small icon buttons visible on hover/focus), while preserving the existing click-to-filter behavior. Use existing shadcn-ui primitives already used in the app (e.g., Button/Badge/ScrollArea + Dialog/Input for rename, and ConfirmDialog for delete confirmation) and ensure edit/delete clicks do not trigger category selection. Verify the component's usage instructions before implementing."
+          "description": "Add a 'Create category' entry directly below Favorites (input + action) that invokes a provided create handler; keep it visible even when there are zero categories. Use shadcn-ui Input/Button to match existing UI patterns, and disable or show guidance when backend is not ready. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Wire CategoryFilterBar’s new rename/delete flows into the app state by passing callbacks that can update/clear the currently selected category filter when a rename or delete occurs from the filter bar."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Support name-only category renames and keep prompts and category list consistent after rename, including clean filter selection transitions.",
-      "acceptanceCriteria": [
-        "Renaming a category changes only its name (no other prompt fields are modified).",
-        "After rename completes, prompts that previously contained the old category name now contain the new category name.",
-        "After rename completes, the old category no longer appears in the categories list and the new category does appear.",
-        "If the renamed category was currently selected as a filter, the UI transitions cleanly (e.g., selection updates to the new name or clears selection) without errors."
-      ],
-      "file_operations": [
+          "description": "Wire the new create-category control: implement an onCreateCategory handler that (1) prevents case-insensitive duplicates with an English toast message, (2) calls usePromptLibrarySync().saveCategory for backend persistence, (3) surfaces success/failure to the user in English, and (4) keeps UI state consistent with the category store. Verify the component's usage instructions before implementing."
+        },
         {
           "path": "frontend/src/features/backend/promptLibraryApi.ts",
           "operation": "modify",
-          "description": "Add an API wrapper for the backend capability that performs a category rename (e.g., a method that invokes the backend’s category-name update function), keeping the existing category ID mapping behavior consistent with the rest of the app."
-        },
-        {
-          "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
-          "operation": "modify",
-          "description": "Update the renameCategory action to persist renames end-to-end using the dedicated backend rename capability when available, and ensure local prompt updates only change the category name values (no other prompt fields). Keep local categories/prompt stores in sync after rename completes."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Ensure that when a renamed category was selected as the active filter, the selectedCategory state updates to the new name (or clears if appropriate) to avoid stale selection and UI errors."
-        },
-        {
-          "path": "frontend/src/components/categories/CategoryFilterBar.tsx",
-          "operation": "modify",
-          "description": "Constrain the rename UI to name-only editing (single text input), validate trimmed non-empty values, and invoke the sync hook rename action. Verify the component's usage instructions before implementing."
+          "description": "Align category persistence calls with the backend interface: represent categories by name strings (no synthetic id), and call saveCategory/deleteCategory using the backend’s expected parameters so created categories persist correctly for the signed-in user."
         }
       ]
     },
     {
-      "id": "REQ-3",
-      "summary": "Delete categories from the filter bar while detaching them from prompts and clearing active category filters when needed.",
+      "id": "REQ-6",
+      "summary": "Ensure create/rename/delete category actions from the UI consistently use backend-synced actions and reflect success/failure to the user.",
       "acceptanceCriteria": [
-        "Deleting a category does not delete any prompts.",
-        "After deletion, prompts that had the deleted category no longer include it in their categories list.",
-        "After deletion, the category no longer appears in the categories list (including the filter bar).",
-        "If the deleted category was currently selected as a filter, the selection is cleared automatically."
+        "Create/rename/delete category actions from the category UI trigger backend calls and reflect success/failure to the user in English.",
+        "After any category mutation, the categories shown below Favorites remain consistent with the backend response (including after refreshFromBackend)."
       ],
       "file_operations": [
         {
           "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
           "operation": "modify",
-          "description": "Harden the deleteCategory action to ensure prompts are preserved while only removing the deleted category from each prompt’s categories list locally after the backend operation completes; keep categories store updated so the filter bar no longer shows the deleted category."
+          "description": "Standardize category mutation wrappers (save/rename/delete) to return clear errors for UI messaging, and keep local stores updated only on successful backend writes to preserve backend-as-source-of-truth behavior."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/components/categories/ManageCategoriesDialog.tsx",
           "operation": "modify",
-          "description": "When a category is deleted via the filter bar controls, automatically clear selectedCategory if it matches the deleted category to prevent a stale active filter."
+          "description": "Add duplicate-prevention and user-facing English messaging for rename (case-insensitive conflicts), and ensure rename/delete failures are clearly communicated (leveraging existing toasts from sync hook where applicable). Use existing shadcn-ui dialog/input/button components. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/categories/CategoryFilterBar.tsx",
+          "path": "frontend/src/components/categories/CategoryPicker.tsx",
           "operation": "modify",
-          "description": "Add a delete confirmation flow for each category in the filter bar (reusing the existing ConfirmDialog pattern) and invoke the sync hook delete action. Ensure deleting from the badge area does not navigate or require opening a separate management screen. Verify the component's usage instructions before implementing."
+          "description": "When creating a new category from the prompt editor flow, call the backend-backed saveCategory action (via usePromptLibrarySync) instead of only mutating the local store; preserve existing case-insensitive duplicate prevention and add an English message when a duplicate is attempted. Use existing shadcn-ui Input/Button/Checkbox/ScrollArea components. Verify the component's usage instructions before implementing."
         }
       ]
     }
