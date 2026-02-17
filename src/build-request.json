@@ -1,0 +1,87 @@
+{
+  "kind": "build_request",
+  "title": "Use uploaded app icon as browser tab favicon",
+  "projectName": "Prompt Library",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Add the uploaded image file `prompt-library-favicon.png` to the frontend static assets so it is served publicly (e.g., via the frontend public folder) and can be referenced by URL at runtime.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Can you make the icon of this app the favicon as well?",
+          "That is what I want for the favicon."
+        ]
+      },
+      "acceptanceCriteria": [
+        "`prompt-library-favicon.png` (or a derived favicon file created from it) is present in the frontend’s publicly served static assets so it can be loaded by the browser without backend involvement."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Replace the app’s current favicon implementation so the browser tab uses the uploaded icon as the site favicon (replacing any existing favicon). Ensure the favicon is applied on initial page load.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "I just want the favicon to show on the tab of the page. Nothing else.",
+          "Just the tab."
+        ]
+      },
+      "acceptanceCriteria": [
+        "When loading the app in a browser, the tab displays the new favicon based on `prompt-library-favicon.png`.",
+        "Any existing favicon mechanism (including the embedded base64 favicon in `frontend/src/lib/favicon.ts`) no longer determines the tab icon."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Update `frontend/index.html` (and/or the existing favicon utility usage) to include a proper `<link rel=\"icon\" ...>` referencing the new favicon asset, without adding any additional UI elements or in-app branding changes.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "I just want the favicon to show on the tab of the page. Nothing else."
+        ]
+      },
+      "acceptanceCriteria": [
+        "`frontend/index.html` includes a favicon link tag (or equivalent initialization occurs before the app renders) that points to the new favicon asset.",
+        "No visible UI components, headers, logos, or in-app icons are changed as part of this request."
+      ]
+    }
+  ],
+  "constraints": [
+    "Frontend immutable paths (if any) must not be edited; compose existing UI components rather than modifying read-only component sources.",
+    "Do not add new backend functionality; this change must be handled entirely in the frontend/static assets."
+  ],
+  "nonGoals": [
+    "Adding PWA/manifest icons, apple-touch-icons, Android home screen icons, or splash screens.",
+    "Changing the in-app header/logo or any other UI branding beyond the browser tab favicon."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": [
+      "Convert/resize the uploaded icon for a standard favicon size (prompt-library-favicon.png > favicon.dim_32x32.png)",
+      "Optionally generate a small favicon size for broader browser support (prompt-library-favicon.png > favicon.dim_16x16.png)"
+    ]
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [
+      "Use English for user-facing text"
+    ],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}

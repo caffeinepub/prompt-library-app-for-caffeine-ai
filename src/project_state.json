@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
+  "imageRequirements": "## Edit Images\n- Convert/resize the uploaded icon for a standard favicon size (prompt-library-favicon.png > favicon.dim_32x32.png)\n- Optionally generate a small favicon size for broader browser support (prompt-library-favicon.png > favicon.dim_16x16.png)",
+  "existing_features": [
+    {
+      "id": "feature-add-the-uploaded-image-file-prompt-library-favicon-png-to-the-frontend-static-assets-so-it-is-served-publicly-e-g-via-the-frontend-public-folder-and-can-be-referenced-by-url-at-runtime",
+      "title": "Add the uploaded image file `prompt-library-favicon.png` to the frontend static assets so it is served publicly (e.g., via the frontend public folder) and can be referenced by URL at runtime.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-the-app-s-current-favicon-implementation-so-the-browser-tab-uses-the-uploaded-icon-as-the-site-favicon-replacing-any-existing-favicon-ensure-the-favicon-is-applied-on-initial-page-load",
+      "title": "Replace the app’s current favicon implementation so the browser tab uses the uploaded icon as the site favicon (replacing any existing favicon). Ensure the favicon is applied on initial page load.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-frontend-index-html-and-or-the-existing-favicon-utility-usage-to-include-a-proper-link-rel-icon-referencing-the-new-favicon-asset-without-adding-any-additional-ui-elements-or-in-app-branding-changes",
+      "title": "Update `frontend/index.html` (and/or the existing favicon utility usage) to include a proper `<link rel=\"icon\" ...>` referencing the new favicon asset, without adding any additional UI elements or in-app branding changes.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Use the app icon as the site favicon shown in the browser tab (replace existing favicon if present)",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Prompt Library",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

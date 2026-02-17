@@ -1,2 +1,3 @@
-# prompt-library-app-for-caffeine-ai
-Exported from Caffeine project: PROMPT LIBRARY APP FOR CAFFEINE AI
+## 
+
+To run app build and run docker image: `docker build -t app . docker run -it --network host app`

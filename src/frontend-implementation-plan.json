@@ -1,0 +1,61 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Use uploaded app icon as browser tab favicon",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Add the uploaded favicon image (and resized variants) to publicly served frontend static assets.",
+      "acceptanceCriteria": [
+        "`prompt-library-favicon.png` (or a derived favicon file created from it) is present in the frontend’s publicly served static assets so it can be loaded by the browser without backend involvement."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/public/assets/generated/prompt-library-favicon.png",
+          "operation": "create",
+          "description": "Add the uploaded `prompt-library-favicon.png` into the publicly served static assets (copy from the provided asset into the frontend public assets directory)."
+        },
+        {
+          "path": "frontend/public/assets/generated/favicon.dim_32x32.png",
+          "operation": "create",
+          "description": "Create a resized favicon asset derived from `prompt-library-favicon.png` at 32x32 pixels: `frontend/public/assets/generated/favicon.dim_32x32.png`."
+        },
+        {
+          "path": "frontend/public/assets/generated/favicon.dim_16x16.png",
+          "operation": "create",
+          "description": "Optionally create a resized favicon asset derived from `prompt-library-favicon.png` at 16x16 pixels for broader browser support: `frontend/public/assets/generated/favicon.dim_16x16.png`."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Remove the embedded base64 favicon mechanism so it no longer determines the browser tab icon.",
+      "acceptanceCriteria": [
+        "When loading the app in a browser, the tab displays the new favicon based on `prompt-library-favicon.png`.",
+        "Any existing favicon mechanism (including the embedded base64 favicon in `frontend/src/lib/favicon.ts`) no longer determines the tab icon."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/favicon.ts",
+          "operation": "modify",
+          "description": "Remove the embedded base64 favicon data and update the utility so it does not set a base64 favicon (either deprecate the function or have it reference the new static favicon asset), ensuring this file no longer determines the tab icon."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Set the favicon via a proper link tag in frontend/index.html without any UI/branding changes.",
+      "acceptanceCriteria": [
+        "`frontend/index.html` includes a favicon link tag (or equivalent initialization occurs before the app renders) that points to the new favicon asset.",
+        "No visible UI components, headers, logos, or in-app icons are changed as part of this request."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/index.html",
+          "operation": "modify",
+          "description": "Add/replace favicon `<link rel=\"icon\" ...>` tags in the HTML head to reference the new publicly served assets (use `frontend/public/assets/generated/favicon.dim_32x32.png` as the primary icon and `frontend/public/assets/generated/favicon.dim_16x16.png` as an additional size), ensuring it applies on initial page load and replaces any prior favicon behavior."
+        }
+      ]
+    }
+  ]
+}
