@@ -59,7 +59,9 @@ function App() {
     isCheckingConnectivity,
     connectivityError,
     savePrompt, 
-    deletePrompt: deletePromptBackend, 
+    deletePrompt: deletePromptBackend,
+    renameCategory: renameCategoryBackend,
+    deleteCategory: deleteCategoryBackend,
     refreshFromBackend 
   } = usePromptLibrarySync();
 
@@ -241,6 +243,34 @@ function App() {
     }
   };
 
+  const handleCategoryRename = async (oldName: string, newName: string) => {
+    try {
+      await renameCategoryBackend(oldName, newName);
+      toast.success('Category renamed successfully');
+      
+      // Update selected category if it was the renamed one
+      if (selectedCategory === oldName) {
+        setSelectedCategory(newName);
+      }
+    } catch (error) {
+      // Error already shown by sync hook
+    }
+  };
+
+  const handleCategoryDelete = async (categoryName: string) => {
+    try {
+      await deleteCategoryBackend(categoryName);
+      toast.success('Category deleted successfully');
+      
+      // Clear selected category if it was the deleted one
+      if (selectedCategory === categoryName) {
+        setSelectedCategory(null);
+      }
+    } catch (error) {
+      // Error already shown by sync hook
+    }
+  };
+
   const handleClearScreen = () => {
     setSelectedCategory(null);
     setShowFavoritesOnly(false);
@@ -306,6 +336,8 @@ function App() {
               showFavoritesOnly={showFavoritesOnly}
               onCategorySelect={handleCategorySelect}
               onFavoritesToggle={handleFavoritesToggle}
+              onCategoryRename={handleCategoryRename}
+              onCategoryDelete={handleCategoryDelete}
             />
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

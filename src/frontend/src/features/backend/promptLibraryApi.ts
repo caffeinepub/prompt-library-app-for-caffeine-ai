@@ -78,6 +78,10 @@ export class PromptLibraryApi {
     await this.actor.saveCategory(backendCategory);
   }
 
+  async renameCategory(oldName: string, newName: string): Promise<void> {
+    await this.actor.updateCategoryName(oldName, newName);
+  }
+
   async deleteCategory(categoryName: string): Promise<void> {
     const backendCategory = toBackendCategory(categoryName);
     await this.actor.deleteCategory(backendCategory.id);

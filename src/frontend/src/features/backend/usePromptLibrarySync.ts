@@ -280,28 +280,14 @@ export function usePromptLibrarySync() {
     }
 
     try {
-      // Save new category
-      await apiRef.current.saveCategory(newName);
-      
-      // Update all prompts that use the old category
-      const prompts = usePromptStore.getState().prompts;
-      const affectedPrompts = prompts.filter(p => p.categories.includes(oldName));
-      
-      for (const prompt of affectedPrompts) {
-        const updatedPrompt = {
-          ...prompt,
-          categories: prompt.categories.map(c => c === oldName ? newName : c),
-        };
-        await apiRef.current.savePrompt(updatedPrompt);
-      }
-      
-      // Delete old category
-      await apiRef.current.deleteCategory(oldName);
+      // Use the backend's updateCategoryName method
+      await apiRef.current.renameCategory(oldName, newName);
       
       // Update local state
       useCategoryStore.getState().renameCategory(oldName, newName);
       
       // Update local prompts
+      const prompts = usePromptStore.getState().prompts;
       const updatedPrompts = prompts.map(p => ({
         ...p,
         categories: p.categories.map(c => c === oldName ? newName : c),
@@ -337,25 +323,14 @@ export function usePromptLibrarySync() {
     }
 
     try {
-      // Update all prompts that use this category
-      const prompts = usePromptStore.getState().prompts;
-      const affectedPrompts = prompts.filter(p => p.categories.includes(categoryName));
-      
-      for (const prompt of affectedPrompts) {
-        const updatedPrompt = {
-          ...prompt,
-          categories: prompt.categories.filter(c => c !== categoryName),
-        };
-        await apiRef.current.savePrompt(updatedPrompt);
-      }
-      
-      // Delete category
+      // Delete category - backend handles detaching from prompts
       await apiRef.current.deleteCategory(categoryName);
       
       // Update local state
       useCategoryStore.getState().deleteCategory(categoryName);
       
       // Update local prompts
+      const prompts = usePromptStore.getState().prompts;
       const updatedPrompts = prompts.map(p => ({
         ...p,
         categories: p.categories.filter(c => c !== categoryName),

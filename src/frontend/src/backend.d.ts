@@ -45,4 +45,5 @@ export interface backendInterface {
     saveCategory(category: Category): Promise<void>;
     savePrompt(prompt: Prompt): Promise<void>;
     searchPrompts(searchTerm: string): Promise<Array<Prompt>>;
+    updateCategoryName(oldName: string, newName: string): Promise<void>;
 }

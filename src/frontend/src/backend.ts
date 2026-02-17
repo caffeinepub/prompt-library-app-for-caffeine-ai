@@ -128,6 +128,7 @@ export interface backendInterface {
     saveCategory(category: Category): Promise<void>;
     savePrompt(prompt: Prompt): Promise<void>;
     searchPrompts(searchTerm: string): Promise<Array<Prompt>>;
+    updateCategoryName(oldName: string, newName: string): Promise<void>;
 }
 import type { Category as _Category, Prompt as _Prompt, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
@@ -367,6 +368,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.searchPrompts(arg0);
+            return result;
+        }
+    }
+    async updateCategoryName(arg0: string, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateCategoryName(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateCategoryName(arg0, arg1);
             return result;
         }
     }

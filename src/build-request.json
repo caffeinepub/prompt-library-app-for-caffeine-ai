@@ -1,94 +1,74 @@
 {
   "kind": "build_request",
-  "title": "Fix production 'Not connected to backend' when saving prompts",
+  "title": "Add edit/delete for categories shown below Favorites",
   "projectName": "Prompt Library",
-  "priority": "high",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add robust actor-creation error handling and visibility so production failures to create the backend actor are surfaced (instead of leaving the app in a silent null-actor state). Specifically: expose actor creation status (loading/success/error) and the underlying error message/details to the UI layer, and ensure failures are logged with enough context to diagnose production-only issues.",
+      "text": "Provide a way to edit (rename) and delete categories directly from the category list displayed below the \"Favorites\" control (the category badges area in the filter bar).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6",
+          "msg-8"
         ],
         "quotes": [
-          "the live version still says not connected to the backend\" when I save a draft in the add prompt.",
-          "Still not working incognito."
+          "It works perfect! Now I need to be able to delete or edit the categories.",
+          "1) Below the favorite tab."
         ]
       },
       "acceptanceCriteria": [
-        "If backend actor creation fails in production, the user sees a clear error state (not just \"Not connected to backend\"), and the browser console includes a structured log with the error message/stack and relevant context (e.g., whether authenticated, current principal).",
-        "If actor creation succeeds, the UI proceeds normally with no additional friction.",
-        "No changes are made to files under frontend/src/components/ui or the immutable hook files listed in SYSTEM_CONTEXT."
+        "When categories are visible under the Favorites control, the user can initiate rename and delete actions from that same area (without needing to navigate elsewhere).",
+        "Rename and delete actions are available for each category shown in the filter bar."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Prevent saving prompts/categories while the backend connection is not ready. Disable or block the Save action in the \"+Add Prompt\" / prompt editor flow until the backend actor/API is initialized, and show a user-facing English status message (e.g., \"Connecting to backend…\" or a retry prompt) rather than allowing a save that immediately throws \"Not connected to backend\".",
-      "target": "frontend",
+      "text": "Limit category editing to name-only changes, and persist category renames end-to-end: update the categories list and update any prompts currently using the category so they reference the new category name.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-8"
         ],
         "quotes": [
-          "Now when I add a prompt in the \"+Add Prompt\", after filling out all the fields, and push save, it says \"not connected to the backend\"."
+          "2) Just the category, everything else is editable."
         ]
       },
       "acceptanceCriteria": [
-        "When the backend connection is not ready, the Save button/action is disabled (or otherwise prevented) and the user is informed that the app is connecting.",
-        "Once the backend connection becomes ready, Save is enabled and successfully persists without showing \"Not connected to the backend\".",
-        "No toast with the exact text \"Not connected to backend\" appears during normal startup/race conditions; it should only appear if a genuine connection failure persists after retries."
+        "Renaming a category changes only its name (no other prompt fields are modified).",
+        "After rename completes, prompts that previously contained the old category name now contain the new category name.",
+        "After rename completes, the old category no longer appears in the categories list and the new category does appear.",
+        "If the renamed category was currently selected as a filter, the UI transitions cleanly (e.g., selection updates to the new name or clears selection) without errors."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Implement a lightweight backend connectivity self-check on authenticated app startup (production and draft) to detect and report a canister/config mismatch early. The check should attempt a simple backend call after actor creation and show an actionable English error if it fails, including guidance to retry (e.g., reload) and capturing the failure details in console logs.",
+      "text": "When deleting a category, detach it from prompts (remove that category from each prompt’s categories array) and keep the prompts themselves; then remove the category from the categories list and backend storage.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-8"
         ],
         "quotes": [
-          "The draft is working great but the the live version still says not connected to the backend"
+          "3) No, nothing else should be linked to it. Detach the items and keep them."
         ]
       },
       "acceptanceCriteria": [
-        "After login, the app performs a backend call (using the same actor used by save) and confirms connectivity before enabling editing/saving.",
-        "If the call fails, the UI shows an error that indicates backend connectivity is failing (not an authorization message unless that is the actual error), and console logs include the error details.",
-        "This change does not alter backend authorization rules; it only adds/uses existing backend calls for verification."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Fix production configuration so the frontend creates the actor against the correct backend canister ID in live. Ensure the actor factory used by the frontend (imported as createActorWithConfig) is correctly configured/built for production so it never resolves to an empty/incorrect canister ID or an unreachable host in the live deployment.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "the frontend is not creating the backend actor at all in the live environment.",
-          "The most likely causes are: • The live build is missing or mis-configured `config.ts` (where the backend canister ID and actor creation live)"
-        ]
-      },
-      "acceptanceCriteria": [
-        "In production, the actor is created successfully and saving a newly added prompt works end-to-end.",
-        "If configuration is missing/invalid at runtime, the app fails fast with a clear English error indicating misconfiguration rather than silently leaving the actor null.",
-        "No changes require third-party services; the solution remains within the IC + generated declarations/config approach used by the project."
+        "Deleting a category does not delete any prompts.",
+        "After deletion, prompts that had the deleted category no longer include it in their categories list.",
+        "After deletion, the category no longer appears in the categories list (including the filter bar).",
+        "If the deleted category was currently selected as a filter, the selection is cleared automatically."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
-    "Do not edit immutable frontend paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and anything under frontend/src/components/ui; compose around them instead.",
-    "Use English for any user-facing text.",
-    "Avoid introducing unsupported technologies (no external DBs, no third-party auth beyond Internet Identity, no websockets)."
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Do not edit files under frontend/src/components/ui or other immutablePaths; compose existing UI components instead."
   ],
   "nonGoals": [
-    "Adding new prompt-library features unrelated to connectivity (e.g., new fields, new views).",
-    "Changing backend authorization behavior beyond what is required to perform a safe connectivity check.",
-    "Implementing CI/CD or external monitoring services."
+    "Adding additional category fields beyond name (e.g., description editing UI).",
+    "Deleting prompts as a side effect of deleting a category."
   ],
   "imageRequirements": {
     "required": [],

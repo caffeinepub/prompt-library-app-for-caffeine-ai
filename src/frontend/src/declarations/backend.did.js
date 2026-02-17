@@ -50,6 +50,7 @@ export const idlService = IDL.Service({
   'saveCategory' : IDL.Func([Category], [], []),
   'savePrompt' : IDL.Func([Prompt], [], []),
   'searchPrompts' : IDL.Func([IDL.Text], [IDL.Vec(Prompt)], ['query']),
+  'updateCategoryName' : IDL.Func([IDL.Text, IDL.Text], [], []),
 });
 
 export const idlInitArgs = [];
@@ -97,6 +98,7 @@ export const idlFactory = ({ IDL }) => {
     'saveCategory' : IDL.Func([Category], [], []),
     'savePrompt' : IDL.Func([Prompt], [], []),
     'searchPrompts' : IDL.Func([IDL.Text], [IDL.Vec(Prompt)], ['query']),
+    'updateCategoryName' : IDL.Func([IDL.Text, IDL.Text], [], []),
   });
 };
 

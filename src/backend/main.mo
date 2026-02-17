@@ -6,13 +6,15 @@ import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   // Data structure definitions
   type Prompt = {
     id : Text;
     title : Text;
-    content : Text; // Store rich-text as HTML from frontend
+    content : Text;
     author : Text;
     categories : [Text];
     tags : [Text];
@@ -42,11 +44,7 @@ actor {
   include MixinAuthorization(accessControlState);
 
   // Connectivity check - accessible to all callers including guests
-  // This allows early detection of canister/config mismatches during app startup
-  public query ({ caller }) func backendConnectivityCheck() : async () {
-    // No authorization check - this is a health check endpoint
-    // accessible to any caller to diagnose connectivity issues
-  };
+  public query ({ caller }) func backendConnectivityCheck() : async () {};
 
   // User profile management
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
@@ -98,8 +96,6 @@ actor {
 
     let userData = getOrCreateUserData(caller);
     userData.prompts.add(prompt.id, prompt);
-
-    // Ensure categories are persisted with prompt (in Prompt this is persist automatically)
   };
 
   public query ({ caller }) func getPrompt(promptId : Text) : async ?Prompt {
@@ -143,6 +139,56 @@ actor {
     userData.categories.add(category.id, category);
   };
 
+  public shared ({ caller }) func updateCategoryName(oldName : Text, newName : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can update category names");
+    };
+
+    let userData = getOrCreateUserData(caller);
+    let categories = userData.categories;
+
+    switch (categories.get(oldName)) {
+      case (null) { Runtime.trap("Category not found") };
+      case (?category) {
+        // Update the category name
+        let updatedCategory = {
+          id = category.id;
+          name = newName;
+          description = category.description;
+        };
+
+        // Remove the old category and add the new one
+        categories.remove(oldName);
+        categories.add(newName, updatedCategory);
+
+        // Update prompts to reference the new category name
+        let prompts = userData.prompts;
+        for ((id, prompt) in prompts.entries()) {
+          let updatedCategories = List.fromArray(prompt.categories).map(
+            func(categoryName) {
+              if (categoryName == oldName) {
+                newName;
+              } else {
+                categoryName;
+              };
+            }
+          ).toArray();
+
+          let updatedPrompt = {
+            id = prompt.id;
+            title = prompt.title;
+            content = prompt.content;
+            author = prompt.author;
+            categories = updatedCategories;
+            tags = prompt.tags;
+          };
+
+          prompts.add(id, updatedPrompt);
+        };
+      };
+    };
+  };
+
   public query ({ caller }) func getCategory(categoryId : Text) : async ?Category {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can fetch categories");
@@ -171,6 +217,29 @@ actor {
     };
 
     let userData = getOrCreateUserData(caller);
+
+    // Detach category from prompts
+    let prompts = userData.prompts;
+    for ((id, prompt) in prompts.entries()) {
+      let filteredCategories = List.fromArray(prompt.categories).filter(
+        func(categoryName) {
+          categoryName != categoryId;
+        }
+      ).toArray();
+
+      let updatedPrompt = {
+        id = prompt.id;
+        title = prompt.title;
+        content = prompt.content;
+        author = prompt.author;
+        categories = filteredCategories;
+        tags = prompt.tags;
+      };
+
+      prompts.add(id, updatedPrompt);
+    };
+
+    // Remove category
     userData.categories.remove(categoryId);
   };
 

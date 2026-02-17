@@ -1,104 +1,84 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix production backend connection/actor creation failures and prevent save race conditions",
+  "title": "Inline rename/delete controls for category badges in filter bar",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Surface actor creation status/errors to the UI and add structured diagnostic logging for production-only actor creation failures.",
+      "summary": "Add rename and delete actions directly on each category badge in the filter bar under Favorites.",
       "acceptanceCriteria": [
-        "If backend actor creation fails in production, the user sees a clear error state (not just \"Not connected to backend\"), and the browser console includes a structured log with the error message/stack and relevant context (e.g., whether authenticated, current principal).",
-        "If actor creation succeeds, the UI proceeds normally with no additional friction.",
-        "No changes are made to files under frontend/src/components/ui or the immutable hook files listed in SYSTEM_CONTEXT."
+        "When categories are visible under the Favorites control, the user can initiate rename and delete actions from that same area (without needing to navigate elsewhere).",
+        "Rename and delete actions are available for each category shown in the filter bar."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/backend/actorDiagnostics.ts",
-          "operation": "create",
-          "description": "Add a small diagnostics utility to produce structured console logs for actor creation/connectivity failures (include: phase, environment hints, isAuthenticated, principal string when available, and normalized error message/stack)."
-        },
-        {
-          "path": "frontend/src/features/backend/useBackendActorStatus.ts",
-          "operation": "create",
-          "description": "Create a wrapper hook that composes around the immutable useActor/useInternetIdentity to expose actor creation status (loading/success/error) and error details by reading the React Query cache state for the actor query key; call actorDiagnostics for structured logging when errors are detected."
-        },
-        {
-          "path": "frontend/src/components/backend/BackendConnectionBanner.tsx",
-          "operation": "create",
-          "description": "Add a lightweight banner/panel component to display backend connection/actor initialization state and an actionable English error message when actor creation fails (retry guidance via reload). This component should not use or modify anything under frontend/src/components/ui. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/components/categories/CategoryFilterBar.tsx",
+          "operation": "modify",
+          "description": "Enhance the category badges row to include per-category edit (rename) and delete affordances directly in the badge area (e.g., small icon buttons visible on hover/focus), while preserving the existing click-to-filter behavior. Use existing shadcn-ui primitives already used in the app (e.g., Button/Badge/ScrollArea + Dialog/Input for rename, and ConfirmDialog for delete confirmation) and ensure edit/delete clicks do not trigger category selection. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Wire useBackendActorStatus into the authenticated app UI and render BackendConnectionBanner when actor creation is loading or error; ensure the banner uses English messaging and that failures are visible rather than leaving the app in a silent null-actor state."
+          "description": "Wire CategoryFilterBar’s new rename/delete flows into the app state by passing callbacks that can update/clear the currently selected category filter when a rename or delete occurs from the filter bar."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Block/disable Save in the Add/Edit Prompt flow until backend connectivity is ready and show a clear connecting/retry message instead of allowing a save that throws.",
+      "summary": "Support name-only category renames and keep prompts and category list consistent after rename, including clean filter selection transitions.",
       "acceptanceCriteria": [
-        "When the backend connection is not ready, the Save button/action is disabled (or otherwise prevented) and the user is informed that the app is connecting.",
-        "Once the backend connection becomes ready, Save is enabled and successfully persists without showing \"Not connected to the backend\".",
-        "No toast with the exact text \"Not connected to backend\" appears during normal startup/race conditions; it should only appear if a genuine connection failure persists after retries."
+        "Renaming a category changes only its name (no other prompt fields are modified).",
+        "After rename completes, prompts that previously contained the old category name now contain the new category name.",
+        "After rename completes, the old category no longer appears in the categories list and the new category does appear.",
+        "If the renamed category was currently selected as a filter, the UI transitions cleanly (e.g., selection updates to the new name or clears selection) without errors."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/prompts/PromptEditorDialog.tsx",
+          "path": "frontend/src/features/backend/promptLibraryApi.ts",
           "operation": "modify",
-          "description": "Add props to control save availability (e.g., canSave + disabledReason/statusText) and update the dialog UI to disable the Save button and show an English status message like \"Connecting to backend…\" (and retry guidance) when backend connectivity is not ready; also prevent handleSave from calling onSave while blocked. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Pass backend readiness/status message into PromptEditorDialog so Save is blocked during startup/actor initialization/connectivity checks; also add a defensive guard in handleSavePrompt to avoid invoking save while not ready (with an English message surfaced in the dialog/banner rather than a \"Not connected\" toast)."
+          "description": "Add an API wrapper for the backend capability that performs a category rename (e.g., a method that invokes the backend’s category-name update function), keeping the existing category ID mapping behavior consistent with the rest of the app."
         },
         {
           "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
           "operation": "modify",
-          "description": "Replace the current immediate toast+throw behavior when apiRef is null with a readiness/status export that callers can use to disable Save; ensure normal startup race conditions do not trigger a toast with the exact text \"Not connected to backend\"."
+          "description": "Update the renameCategory action to persist renames end-to-end using the dedicated backend rename capability when available, and ensure local prompt updates only change the category name values (no other prompt fields). Keep local categories/prompt stores in sync after rename completes."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Ensure that when a renamed category was selected as the active filter, the selectedCategory state updates to the new name (or clears if appropriate) to avoid stale selection and UI errors."
+        },
+        {
+          "path": "frontend/src/components/categories/CategoryFilterBar.tsx",
+          "operation": "modify",
+          "description": "Constrain the rename UI to name-only editing (single text input), validate trimmed non-empty values, and invoke the sync hook rename action. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Add an authenticated startup backend connectivity self-check using an existing backend call and gate editing/saving on success with actionable UI errors and console logs.",
+      "summary": "Delete categories from the filter bar while detaching them from prompts and clearing active category filters when needed.",
       "acceptanceCriteria": [
-        "After login, the app performs a backend call (using the same actor used by save) and confirms connectivity before enabling editing/saving.",
-        "If the call fails, the UI shows an error that indicates backend connectivity is failing (not an authorization message unless that is the actual error), and console logs include the error details.",
-        "This change does not alter backend authorization rules; it only adds/uses existing backend calls for verification."
+        "Deleting a category does not delete any prompts.",
+        "After deletion, prompts that had the deleted category no longer include it in their categories list.",
+        "After deletion, the category no longer appears in the categories list (including the filter bar).",
+        "If the deleted category was currently selected as a filter, the selection is cleared automatically."
       ],
       "file_operations": [
         {
           "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
           "operation": "modify",
-          "description": "After actor creation and authentication, perform a lightweight connectivity self-check using the existing backendConnectivityCheck() call; track status (checking/success/error) and error details, log failures via actorDiagnostics with relevant context, and ensure isReady only becomes true after the check succeeds (so editing/saving is gated)."
+          "description": "Harden the deleteCategory action to ensure prompts are preserved while only removing the deleted category from each prompt’s categories list locally after the backend operation completes; keep categories store updated so the filter bar no longer shows the deleted category."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Use the sync hook’s connectivity-check status to (a) keep Save disabled until verified and (b) show an actionable English error state when the check fails (e.g., \"Backend connection failed. Please reload to retry.\") without presenting it as an authorization issue unless that is the true error."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Fix/validate production actor factory configuration so the frontend always creates an actor with the correct canister ID/host and fails fast with a clear misconfiguration error.",
-      "acceptanceCriteria": [
-        "In production, the actor is created successfully and saving a newly added prompt works end-to-end.",
-        "If configuration is missing/invalid at runtime, the app fails fast with a clear English error indicating misconfiguration rather than silently leaving the actor null.",
-        "No changes require third-party services; the solution remains within the IC + generated declarations/config approach used by the project."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/config.ts",
-          "operation": "create",
-          "description": "Implement (or replace missing) createActorWithConfig used by the immutable useActor hook: ensure it sources the correct production canister ID/host from the project’s generated declarations/config approach, validates the canister ID at runtime (non-empty, expected format), and throws a clear English misconfiguration error when invalid rather than returning a null/partially-initialized actor."
+          "description": "When a category is deleted via the filter bar controls, automatically clear selectedCategory if it matches the deleted category to prevent a stale active filter."
         },
         {
-          "path": "frontend/src/features/backend/actorDiagnostics.ts",
+          "path": "frontend/src/components/categories/CategoryFilterBar.tsx",
           "operation": "modify",
-          "description": "Add a dedicated log shape/message for configuration/misconfiguration failures (e.g., missing canister ID, invalid host) so production issues are diagnosable from browser console output."
+          "description": "Add a delete confirmation flow for each category in the filter bar (reusing the existing ConfirmDialog pattern) and invoke the sync hook delete action. Ensure deleting from the badge area does not navigate or require opening a separate management screen. Verify the component's usage instructions before implementing."
         }
       ]
     }

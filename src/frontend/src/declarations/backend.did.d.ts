@@ -45,6 +45,7 @@ export interface _SERVICE {
   'saveCategory' : ActorMethod<[Category], undefined>,
   'savePrompt' : ActorMethod<[Prompt], undefined>,
   'searchPrompts' : ActorMethod<[string], Array<Prompt>>,
+  'updateCategoryName' : ActorMethod<[string, string], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
