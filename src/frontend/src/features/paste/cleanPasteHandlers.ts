@@ -54,16 +54,21 @@ export function createContentEditablePasteHandler(
       const range = selection.getRangeAt(0);
       range.deleteContents();
       
-      // Insert text preserving line breaks
+      // Build a DocumentFragment with text nodes and <br> elements in correct order
+      const fragment = document.createDocumentFragment();
       const lines = cleanedText.split('\n');
+      
       lines.forEach((line, index) => {
-        range.insertNode(document.createTextNode(line));
+        fragment.appendChild(document.createTextNode(line));
         if (index < lines.length - 1) {
-          range.insertNode(document.createElement('br'));
+          fragment.appendChild(document.createElement('br'));
         }
       });
       
-      // Move cursor to end
+      // Insert the entire fragment at once (preserves order)
+      range.insertNode(fragment);
+      
+      // Move cursor to end of inserted content
       range.collapse(false);
       selection.removeAllRanges();
       selection.addRange(range);

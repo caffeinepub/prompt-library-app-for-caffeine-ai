@@ -1,36 +1,26 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Prompt management app where users add/save prompts; next work is to sanitize pasted content (especially from Microsoft Word) across all text inputs while preserving basic formatting (line breaks, bullets, numbering).",
-  "architectural_notes": [
-    "Implement global paste sanitization for all text inputs: convert rich text/HTML paste to safe, clean plain text while preserving basic structure (newlines, bullets, numbering)."
-  ],
+  "summary": "New project",
+  "architectural_notes": [],
   "known_issues": [
-    "Pasting content from Microsoft Word into text fields includes hidden HTML/CSS and formatting junk instead of clean text."
+    "Text color changes made inside “+ Add Prompt” do not persist after clicking Save; prompts revert to black (including in search view)."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-implement-a-paste-cleaning-utility-that-removes-microsoft-word-html-css-junk-and-yields-clean-plain-text-while-preserving-basic-structure-line-breaks-bullets-numbering-and-tabs-indentation-so-that-pasting-word-content-does-not-insert-css-html-comments-into-the-saved-text",
-      "title": "Implement a paste-cleaning utility that removes Microsoft Word/HTML/CSS junk and yields clean plain text while preserving basic structure (line breaks, bullets, numbering, and tabs/indentation) so that pasting Word content does not insert CSS/HTML comments into the saved text.",
+      "id": "feature-ensure-prompt-text-color-formatting-set-in-the-add-prompt-rich-text-editor-persists-after-clicking-save-by-preserving-and-or-normalizing-color-markup-during-html-sanitization-including-browser-generated-font-color-and-equivalent-inline-color-styles-so-the-saved-prompt-content-retains-the-selected-colors",
+      "title": "Ensure prompt text color formatting set in the “Add Prompt” rich-text editor persists after clicking Save by preserving and/or normalizing color markup during HTML sanitization (including browser-generated <font color=\"...\"> and equivalent inline color styles) so the saved prompt content retains the selected colors.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-apply-the-word-paste-cleaning-behavior-to-every-user-editable-text-entry-surface-in-the-app-including-the-rich-text-prompt-content-editor-and-all-standard-text-inputs-used-for-titles-search-category-creation-rename-and-any-other-editable-fields-present-in-the-ui",
-      "title": "Apply the Word paste-cleaning behavior to every user-editable text entry surface in the app, including the rich text prompt content editor and all standard text inputs used for titles, search, category creation/rename, and any other editable fields present in the UI.",
+      "id": "feature-display-the-persisted-per-prompt-text-color-formatting-consistently-wherever-prompt-content-is-rendered-including-search-filtered-results-ensuring-no-view-path-re-sanitizes-in-a-way-that-strips-colors",
+      "title": "Display the persisted per-prompt text color formatting consistently wherever prompt content is rendered (including search-filtered results), ensuring no view path re-sanitizes in a way that strips colors.",
       "reqIds": [
         "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-harden-html-sanitization-so-that-if-any-html-is-still-introduced-e-g-via-non-word-sources-or-browser-quirks-word-specific-and-unsafe-nodes-such-as-style-script-head-meta-link-and-html-comments-never-render-as-visible-text-in-prompt-display-components",
-      "title": "Harden HTML sanitization so that if any HTML is still introduced (e.g., via non-Word sources or browser quirks), Word-specific and unsafe nodes (such as style/script/head/meta/link and HTML comments) never render as visible text in prompt display components.",
-      "reqIds": [
-        "REQ-3"
       ],
       "version": 1
     }
@@ -38,7 +28,7 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Clean up Microsoft Word paste: strip Word/HTML/CSS junk while preserving basic formatting (line breaks, bullets, numbering) across all text entry fields",
+      "summary": "Persist each prompt’s custom text color after saving and display it consistently (e.g., in search results)",
       "reqIds": [],
       "status": "pending"
     }

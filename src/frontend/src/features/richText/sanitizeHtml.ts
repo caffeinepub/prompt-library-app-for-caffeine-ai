@@ -1,7 +1,8 @@
 /**
  * Sanitizes HTML content to allow only safe formatting tags and attributes
- * produced by the rich text editor (bold, italic, and color spans).
+ * produced by the rich text editor (bold, italic, and color spans/fonts).
  * Drops unsafe/Word-noise nodes (style/script/head/meta/link/comments) entirely.
+ * Converts browser-generated <font color="..."> tags to <span style="color: ..."> for consistency.
  */
 export function sanitizeHtml(html: string): string {
   // Create a temporary DOM element to parse the HTML
@@ -31,6 +32,27 @@ export function sanitizeHtml(html: string): string {
         return null;
       }
 
+      // Handle <font> tags by converting them to <span> with color style
+      if (tagName === 'font') {
+        const fontElement = element as HTMLFontElement;
+        const color = fontElement.color || fontElement.getAttribute('color');
+        
+        const spanElement = document.createElement('span');
+        if (color) {
+          spanElement.style.color = color;
+        }
+        
+        // Recursively clean and append child nodes
+        Array.from(element.childNodes).forEach((child) => {
+          const cleanChild = cleanNode(child);
+          if (cleanChild) {
+            spanElement.appendChild(cleanChild);
+          }
+        });
+        
+        return spanElement;
+      }
+
       // Allowed tags
       const allowedTags = ['b', 'strong', 'i', 'em', 'span', 'br', 'p', 'div'];
       
@@ -55,7 +77,7 @@ export function sanitizeHtml(html: string): string {
         if (color) {
           cleanElement.style.color = color;
         }
-        // Also check for inline color attribute from Word
+        // Also check for inline color attribute from Word or other sources
         const styleAttr = element.getAttribute('style');
         if (styleAttr && styleAttr.includes('color:')) {
           const colorMatch = styleAttr.match(/color:\s*([^;]+)/);

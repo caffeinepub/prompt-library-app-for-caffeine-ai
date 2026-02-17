@@ -1,91 +1,46 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Clean Microsoft Word paste across all text inputs while preserving basic formatting",
+  "title": "Prompt Library — Preserve & Render Rich Text Color Formatting",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a client-side paste-cleaning utility that strips Word/HTML/CSS junk and produces clean plain text while preserving basic structure (newlines, bullets/numbering readability, tabs/indentation).",
+      "summary": "Preserve per-prompt text color markup when sanitizing and saving rich-text content so saved prompts retain their selected colors.",
       "acceptanceCriteria": [
-        "When pasting content copied from Microsoft Word, the inserted content contains no HTML tags, CSS, <style> blocks, or HTML comments (e.g., no \"<!-- /* Font Definitions */ ... -->\").",
-        "Line breaks from the source are preserved (paragraph separation remains visually separated after paste).",
-        "Bulleted lists copied from Word paste as readable bullet characters (e.g., •) on their own lines.",
-        "Numbered lists copied from Word paste as readable numbering (e.g., \"1.\", \"2.\") on their own lines (as represented in the clipboard plain text).",
-        "The cleaning utility normalizes common Word whitespace artifacts (e.g., CRLF vs LF, non-breaking spaces) without collapsing all newlines into a single line."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/features/paste/cleanPastedText.ts",
-          "operation": "create",
-          "description": "Implement a reusable paste-cleaning utility that prefers clipboard plain text when available, removes Word/HTML/CSS/comment artifacts (including Word-specific HTML comment blocks), normalizes whitespace (CRLF->LF, NBSP->space), preserves tabs/indentation, and derives readable line-based output from HTML only when necessary (e.g., converting list items into lines with bullet/number prefixes)."
-        },
-        {
-          "path": "frontend/src/features/paste/cleanPasteHandlers.ts",
-          "operation": "create",
-          "description": "Add small helper functions to apply the cleaning utility during paste (1) for standard inputs/textarea via selection-aware insertion (e.g., setRangeText) and (2) for contentEditable surfaces via safe text insertion, ensuring cleaning occurs at paste time client-side."
-        },
-        {
-          "path": "frontend/src/features/richText/SimpleRichTextEditor.tsx",
-          "operation": "modify",
-          "description": "Update the editor's onPaste behavior to use the new paste-cleaning utility/handler so Word paste inserts clean plain text (preserving line breaks and readable bullets/numbering) rather than Word HTML, preventing CSS/HTML comment blocks from entering the editor value."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Apply Word paste-cleaning to all user-editable text entry surfaces (prompt editor title, prompt content editor, search input, category create/rename inputs, and any other editable inputs present).",
-      "acceptanceCriteria": [
-        "Pasting Word content into the “Add New Prompt” title field inserts clean plain text (no HTML/CSS junk).",
-        "Pasting Word content into the prompt content editor inserts clean content with preserved line breaks and list readability, and does not insert CSS/HTML comment blocks.",
-        "Pasting Word content into the search box inserts clean plain text.",
-        "Pasting Word content into category text inputs (e.g., new category name, rename category) inserts clean plain text.",
-        "All paste cleaning is performed client-side at paste time (before saving), so the stored prompt/category strings do not include Word HTML/CSS junk."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/prompts/PromptEditorDialog.tsx",
-          "operation": "modify",
-          "description": "Wire the paste-cleaning handler into the Title <Input> so pastes are cleaned before they enter component state and before saving."
-        },
-        {
-          "path": "frontend/src/components/search/SearchInput.tsx",
-          "operation": "modify",
-          "description": "Add an onPaste handler using the shared paste-cleaning helper to ensure pasted Word content becomes clean plain text in the search field."
-        },
-        {
-          "path": "frontend/src/components/categories/CategoryPicker.tsx",
-          "operation": "modify",
-          "description": "Add paste-cleaning to the new category name <Input> so Word paste cannot introduce HTML/CSS junk into newly created category names."
-        },
-        {
-          "path": "frontend/src/components/categories/ManageCategoriesDialog.tsx",
-          "operation": "modify",
-          "description": "Add paste-cleaning to the rename category <Input> so Word paste cannot introduce HTML/CSS junk into renamed category values."
-        },
-        {
-          "path": "frontend/src/features/richText/SimpleRichTextEditor.tsx",
-          "operation": "modify",
-          "description": "Ensure the content editor paste handler uses the shared cleaning logic (from REQ-1) so Word pastes are cleaned consistently with other inputs."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Harden HTML sanitization and rendering so Word-specific and unsafe nodes (style/script/head/meta/link/comments) never show as visible text while preserving allowed basic formatting.",
-      "acceptanceCriteria": [
-        "If a prompt’s stored content contains a <style>...</style> block or an HTML comment, those contents are not shown as visible text when rendering prompt previews/details.",
-        "Prompt rendering continues to support the editor’s allowed basic formatting (bold/italic and line breaks) without showing raw HTML/CSS text."
+        "In the “Add Prompt” dialog, applying a non-black text color and clicking Save results in the saved prompt content retaining that color when the prompt is re-opened for editing.",
+        "After saving, the prompt content retains the selected text colors when rendered in List view and in the Preview dialog.",
+        "Color formatting is preserved across a page refresh and after data is reloaded from the backend (i.e., the HTML stored for the prompt still contains the necessary color markup)."
       ],
       "file_operations": [
         {
           "path": "frontend/src/features/richText/sanitizeHtml.ts",
           "operation": "modify",
-          "description": "Update sanitization to explicitly drop (not unwrap) unsafe/Word-noise nodes and their contents (e.g., style/script/head/meta/link) and to ensure HTML comments never become visible text; keep the editor's allowed basic formatting (bold/italic/line breaks and existing safe inline styling) intact."
+          "description": "Update HTML sanitization to preserve/normalize text color markup on save: explicitly support browser-generated <font color=\"...\"> by converting it to an allowed element (e.g., span) while retaining its color, and preserve equivalent inline color styles (style=\"color: ...\") on allowed formatting tags without allowing unsafe styles. Ensure normalization results in stable color markup being kept in the sanitized HTML string."
         },
+        {
+          "path": "frontend/src/components/prompts/PromptEditorDialog.tsx",
+          "operation": "modify",
+          "description": "Ensure the Save flow continues to sanitize using the updated sanitizer and that the stored/sent prompt content uses the normalized, color-preserving HTML output (no additional transformations that would drop color)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Render persisted per-prompt text colors consistently across all prompt rendering paths (including search-filtered results) without stripping colors during sanitization.",
+      "acceptanceCriteria": [
+        "When a prompt is found via the search input, its displayed content retains the saved text colors (no regression to all-black text).",
+        "No rendering path (e.g., list/grid/table/preview) strips saved text colors while still sanitizing unsafe HTML."
+      ],
+      "file_operations": [
         {
           "path": "frontend/src/components/prompts/PromptContent.tsx",
           "operation": "modify",
-          "description": "Confirm prompt display always renders through the hardened sanitizer (and adjust if needed) so any residual HTML noise in stored content cannot appear as visible text in previews/details."
+          "description": "Confirm all rendered HTML prompt content uses the updated sanitizeHtml behavior so color markup remains intact while unsafe HTML is still removed (single consistent rendering sanitizer)."
+        },
+        {
+          "path": "frontend/src/components/prompts/PromptGridView.tsx",
+          "operation": "modify",
+          "description": "Update the grid view preview to render prompt content via the shared PromptContent (sanitized HTML rendering) rather than converting to plain text, so persisted text colors are visible in grid cards as well as in search-filtered results when grid view is active."
         }
       ]
     }

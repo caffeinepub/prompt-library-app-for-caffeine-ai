@@ -2,12 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-implement-a-paste-cleaning-utility-that-removes-microsoft-word-html-css-junk-and-yields-clean-plain-text-while-preserving-basic-structure-line-breaks-bullets-numbering-and-tabs-indentation-so-that-pasting-word-content-does-not-insert-css-html-comments-into-the-saved-text",
-      "featureTitle": "Implement a paste-cleaning utility that removes Microsoft Word/HTML/CSS junk and yields clean plain text while preserving basic structure (line breaks, bullets, numbering, and tabs/indentation) so that pasting Word content does not insert CSS/HTML comments into the saved text.",
+      "featureId": "feature-ensure-prompt-text-color-formatting-set-in-the-add-prompt-rich-text-editor-persists-after-clicking-save-by-preserving-and-or-normalizing-color-markup-during-html-sanitization-including-browser-generated-font-color-and-equivalent-inline-color-styles-so-the-saved-prompt-content-retains-the-selected-colors",
+      "featureTitle": "Ensure prompt text color formatting set in the “Add Prompt” rich-text editor persists after clicking Save by preserving and/or normalizing color markup during HTML sanitization (including browser-generated <font color=\"...\"> and equivalent inline color styles) so the saved prompt content retains the selected colors.",
       "files": [
-        "frontend/src/features/paste/cleanPasteHandlers.ts",
-        "frontend/src/features/paste/cleanPastedText.ts",
-        "frontend/src/features/richText/SimpleRichTextEditor.tsx"
+        "frontend/src/features/richText/sanitizeHtml.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -23,14 +21,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-apply-the-word-paste-cleaning-behavior-to-every-user-editable-text-entry-surface-in-the-app-including-the-rich-text-prompt-content-editor-and-all-standard-text-inputs-used-for-titles-search-category-creation-rename-and-any-other-editable-fields-present-in-the-ui",
-      "featureTitle": "Apply the Word paste-cleaning behavior to every user-editable text entry surface in the app, including the rich text prompt content editor and all standard text inputs used for titles, search, category creation/rename, and any other editable fields present in the UI.",
+      "featureId": "feature-display-the-persisted-per-prompt-text-color-formatting-consistently-wherever-prompt-content-is-rendered-including-search-filtered-results-ensuring-no-view-path-re-sanitizes-in-a-way-that-strips-colors",
+      "featureTitle": "Display the persisted per-prompt text color formatting consistently wherever prompt content is rendered (including search-filtered results), ensuring no view path re-sanitizes in a way that strips colors.",
       "files": [
-        "frontend/src/components/categories/CategoryPicker.tsx",
-        "frontend/src/components/categories/ManageCategoriesDialog.tsx",
-        "frontend/src/components/prompts/PromptEditorDialog.tsx",
-        "frontend/src/components/search/SearchInput.tsx",
-        "frontend/src/features/richText/SimpleRichTextEditor.tsx"
+        "frontend/src/components/prompts/PromptGridView.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -42,26 +36,6 @@
       ],
       "testIds": [
         "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-harden-html-sanitization-so-that-if-any-html-is-still-introduced-e-g-via-non-word-sources-or-browser-quirks-word-specific-and-unsafe-nodes-such-as-style-script-head-meta-link-and-html-comments-never-render-as-visible-text-in-prompt-display-components",
-      "featureTitle": "Harden HTML sanitization so that if any HTML is still introduced (e.g., via non-Word sources or browser quirks), Word-specific and unsafe nodes (such as style/script/head/meta/link and HTML comments) never render as visible text in prompt display components.",
-      "files": [
-        "frontend/src/components/prompts/PromptContent.tsx",
-        "frontend/src/features/richText/sanitizeHtml.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
       ],
       "confidence": "high"
     }

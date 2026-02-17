@@ -1,11 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Ensure pasting from Microsoft Word produces clean, readable text across all user-editable text surfaces, while preserving basic structure (line breaks, bullets, numbering, tabs/indentation).
+**Goal:** Preserve and consistently display per-prompt rich-text text color formatting after saving and across all prompt views.
 
 **Planned changes:**
-- Add a client-side paste-cleaning utility to strip Word/HTML/CSS junk (e.g., tags, `<style>` blocks, HTML comments) while normalizing whitespace and preserving line breaks and list readability.
-- Apply the paste-cleaning behavior to every user-editable text entry surface, including the prompt content editor and standard text inputs (titles, search, category create/rename, and any other editable fields).
-- Harden rendering sanitization so that if HTML still enters stored content, Word-specific/unsafe nodes (style/script/head/meta/link and HTML comments) never render as visible text in prompt previews/details while continuing to support allowed basic formatting.
+- Update the “Add Prompt” rich-text save pipeline to preserve/normalize color markup during HTML sanitization (including browser-generated `<font color="...">` and equivalent inline `style="color: ..."`).
+- Ensure all rendering paths (list, preview, and search results) display the stored prompt HTML without re-sanitizing in a way that strips saved text colors, while still sanitizing unsafe HTML.
 
-**User-visible outcome:** Pasting content from Microsoft Word anywhere in the app inserts clean text without hidden HTML/CSS/comment blocks, keeps line breaks and list structure readable, and any residual unsafe HTML will not display as raw text in prompt views.
+**User-visible outcome:** After changing text color in “+ Add Prompt” and clicking Save, the prompt retains its colors when re-opened, shown in the list/preview, and when found via search—even after refresh/reload.

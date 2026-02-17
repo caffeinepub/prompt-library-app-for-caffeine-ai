@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PromptActions } from './PromptActions';
-import { htmlToPlainText } from '../../features/richText/htmlToPlainText';
+import { PromptContent } from './PromptContent';
 import { Prompt } from '../../features/prompts/types';
 
 interface PromptGridViewProps {
@@ -31,8 +31,6 @@ export function PromptGridView({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {prompts.map((prompt) => {
-        const plainTextPreview = htmlToPlainText(prompt.content);
-        
         return (
           <Card key={prompt.id} className="hover:shadow-md transition-shadow flex flex-col">
             <CardHeader className="pb-3">
@@ -53,9 +51,12 @@ export function PromptGridView({
               </div>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col">
-              <p className="text-sm text-muted-foreground line-clamp-4 flex-1 mb-3">
-                {plainTextPreview}
-              </p>
+              <div className="flex-1 mb-3">
+                <PromptContent 
+                  content={prompt.content} 
+                  className="line-clamp-4 text-muted-foreground"
+                />
+              </div>
               <div className="flex justify-end">
                 <PromptActions
                   prompt={prompt}

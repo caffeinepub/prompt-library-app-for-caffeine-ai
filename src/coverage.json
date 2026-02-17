@@ -1,60 +1,37 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T20:55:55.669Z",
+  "generatedAt": "2026-02-17T22:23:45.532Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Implement a paste-cleaning utility that removes Microsoft Word/HTML/CSS junk and yields clean plain text while preserving basic structure (line breaks, bullets, numbering, and tabs/indentation) so that pasting Word content does not insert CSS/HTML comments into the saved text.",
+        "summary": "Ensure prompt text color formatting set in the “Add Prompt” rich-text editor persists after clicking Save by preserving and/or normalizing color markup during HTML sanitization (including browser-generated <font color=\"...\"> and equivalent inline color styles) so the saved prompt content retains the selected colors.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/features/paste/cleanPastedText.ts",
-          "frontend/src/features/paste/cleanPasteHandlers.ts",
-          "frontend/src/features/richText/SimpleRichTextEditor.tsx"
+          "frontend/src/features/richText/sanitizeHtml.ts",
+          "frontend/src/components/prompts/PromptEditorDialog.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/features/paste/cleanPastedText.ts",
-          "frontend/src/features/paste/cleanPasteHandlers.ts",
-          "frontend/src/features/richText/SimpleRichTextEditor.tsx"
+          "frontend/src/features/richText/sanitizeHtml.ts"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Apply the Word paste-cleaning behavior to every user-editable text entry surface in the app, including the rich text prompt content editor and all standard text inputs used for titles, search, category creation/rename, and any other editable fields present in the UI.",
+        "summary": "Display the persisted per-prompt text color formatting consistently wherever prompt content is rendered (including search-filtered results), ensuring no view path re-sanitizes in a way that strips colors.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/prompts/PromptEditorDialog.tsx",
-          "frontend/src/components/search/SearchInput.tsx",
-          "frontend/src/components/categories/CategoryPicker.tsx",
-          "frontend/src/components/categories/ManageCategoriesDialog.tsx",
-          "frontend/src/features/richText/SimpleRichTextEditor.tsx"
+          "frontend/src/components/prompts/PromptContent.tsx",
+          "frontend/src/components/prompts/PromptGridView.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/prompts/PromptEditorDialog.tsx",
-          "frontend/src/components/search/SearchInput.tsx",
-          "frontend/src/components/categories/CategoryPicker.tsx",
-          "frontend/src/components/categories/ManageCategoriesDialog.tsx",
-          "frontend/src/features/richText/SimpleRichTextEditor.tsx"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Harden HTML sanitization so that if any HTML is still introduced (e.g., via non-Word sources or browser quirks), Word-specific and unsafe nodes (such as style/script/head/meta/link and HTML comments) never render as visible text in prompt display components.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/features/richText/sanitizeHtml.ts",
-          "frontend/src/components/prompts/PromptContent.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/features/richText/sanitizeHtml.ts",
-          "frontend/src/components/prompts/PromptContent.tsx"
+          "frontend/src/components/prompts/PromptGridView.tsx"
         ]
       }
     ]
@@ -64,14 +41,7 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/categories/CategoryPicker.tsx",
-    "frontend/src/components/categories/ManageCategoriesDialog.tsx",
-    "frontend/src/components/prompts/PromptContent.tsx",
-    "frontend/src/components/prompts/PromptEditorDialog.tsx",
-    "frontend/src/components/search/SearchInput.tsx",
-    "frontend/src/features/paste/cleanPasteHandlers.ts",
-    "frontend/src/features/paste/cleanPastedText.ts",
-    "frontend/src/features/richText/SimpleRichTextEditor.tsx",
+    "frontend/src/components/prompts/PromptGridView.tsx",
     "frontend/src/features/richText/sanitizeHtml.ts",
     "project_state.json",
     "scratch/component-selection.json",

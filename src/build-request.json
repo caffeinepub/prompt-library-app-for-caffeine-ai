@@ -1,76 +1,56 @@
 {
   "kind": "build_request",
-  "title": "Clean Microsoft Word paste across all text inputs while preserving basic formatting",
+  "title": "Persist rich text color formatting for prompts after saving",
   "projectName": "Prompt Library",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Implement a paste-cleaning utility that removes Microsoft Word/HTML/CSS junk and yields clean plain text while preserving basic structure (line breaks, bullets, numbering, and tabs/indentation) so that pasting Word content does not insert CSS/HTML comments into the saved text.",
+      "text": "Ensure prompt text color formatting set in the “Add Prompt” rich-text editor persists after clicking Save by preserving and/or normalizing color markup during HTML sanitization (including browser-generated <font color=\"...\"> and equivalent inline color styles) so the saved prompt content retains the selected colors.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6",
+          "msg-8"
         ],
         "quotes": [
-          "However when I paste something from Microsoft Word, it is pasting weird.",
-          "1) Yes\n2) I do want the basic formatting\n3) Everywhere"
+          "Except when I change the color of the text inside the \"+ Add Prompt\". I save it that way but it doesn't stay that way.",
+          "1) Yes 2) Each Prompt will have its own color 3) It resets after saving, it does not save after clicking the save button"
         ]
       },
       "acceptanceCriteria": [
-        "When pasting content copied from Microsoft Word, the inserted content contains no HTML tags, CSS, <style> blocks, or HTML comments (e.g., no \"<!-- /* Font Definitions */ ... -->\").",
-        "Line breaks from the source are preserved (paragraph separation remains visually separated after paste).",
-        "Bulleted lists copied from Word paste as readable bullet characters (e.g., •) on their own lines.",
-        "Numbered lists copied from Word paste as readable numbering (e.g., \"1.\", \"2.\") on their own lines (as represented in the clipboard plain text).",
-        "The cleaning utility normalizes common Word whitespace artifacts (e.g., CRLF vs LF, non-breaking spaces) without collapsing all newlines into a single line."
+        "In the “Add Prompt” dialog, applying a non-black text color and clicking Save results in the saved prompt content retaining that color when the prompt is re-opened for editing.",
+        "After saving, the prompt content retains the selected text colors when rendered in List view and in the Preview dialog.",
+        "Color formatting is preserved across a page refresh and after data is reloaded from the backend (i.e., the HTML stored for the prompt still contains the necessary color markup)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Apply the Word paste-cleaning behavior to every user-editable text entry surface in the app, including the rich text prompt content editor and all standard text inputs used for titles, search, category creation/rename, and any other editable fields present in the UI.",
+      "text": "Display the persisted per-prompt text color formatting consistently wherever prompt content is rendered (including search-filtered results), ensuring no view path re-sanitizes in a way that strips colors.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "3) Everywhere"
+          "I go to search prompt and all the texts remains black. I want the text's color to stay the  way I changed it in \"+ Add Prompt\"."
         ]
       },
       "acceptanceCriteria": [
-        "Pasting Word content into the “Add New Prompt” title field inserts clean plain text (no HTML/CSS junk).",
-        "Pasting Word content into the prompt content editor inserts clean content with preserved line breaks and list readability, and does not insert CSS/HTML comment blocks.",
-        "Pasting Word content into the search box inserts clean plain text.",
-        "Pasting Word content into category text inputs (e.g., new category name, rename category) inserts clean plain text.",
-        "All paste cleaning is performed client-side at paste time (before saving), so the stored prompt/category strings do not include Word HTML/CSS junk."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Harden HTML sanitization so that if any HTML is still introduced (e.g., via non-Word sources or browser quirks), Word-specific and unsafe nodes (such as style/script/head/meta/link and HTML comments) never render as visible text in prompt display components.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Microsoft Word is pasting a huge block of hidden HTML/CSS into your prompt field."
-        ]
-      },
-      "acceptanceCriteria": [
-        "If a prompt’s stored content contains a <style>...</style> block or an HTML comment, those contents are not shown as visible text when rendering prompt previews/details.",
-        "Prompt rendering continues to support the editor’s allowed basic formatting (bold/italic and line breaks) without showing raw HTML/CSS text."
+        "When a prompt is found via the search input, its displayed content retains the saved text colors (no regression to all-black text).",
+        "No rendering path (e.g., list/grid/table/preview) strips saved text colors while still sanitizing unsafe HTML."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (read-only UI component sources must be composed, not edited).",
-    "Do not edit any paths listed in SYSTEM_CONTEXT.frontend.immutablePaths (compose alternatives instead).",
-    "Do not add any third-party authentication or external service dependencies; keep paste cleanup fully client-side."
+    "Do not edit files under frontend/src/components/ui (Shadcn UI components); compose them instead.",
+    "Do not edit immutable hook files: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx.",
+    "Keep backend as a single Motoko actor; only introduce backend changes if strictly required for this fix."
   ],
   "nonGoals": [
-    "Do not preserve rich Word styling (fonts, sizes, margins, complex tables) beyond basic plain-text structure (line breaks, bullets, numbering).",
-    "Do not change backend schemas or Motoko canister logic for this request."
+    "Adding third-party rich text editors or external libraries.",
+    "Changing authentication or Internet Identity behavior.",
+    "Introducing a new backend database or additional backend services."
   ],
   "imageRequirements": {
     "required": [],
