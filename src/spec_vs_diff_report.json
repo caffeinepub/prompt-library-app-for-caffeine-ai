@@ -1,61 +1,50 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T20:35:21.076Z",
-  "summary": "Diff implements backend prompt persistence APIs and introduces a frontend backend-sync layer plus improved category selection/deduping and category bar click toggling. However, the diff evidence is truncated around the critical save/update paths, so it is not fully verifiable that newly-saved prompts/categories are always inserted into in-memory UI state immediately after Save, nor that category-based filtering + prompt opening works correctly in all view modes.",
+  "generatedAt": "2026-02-17T20:55:55.666Z",
+  "summary": "Implements a client-side paste-cleaning utility and wires it into several text entry points (title, search, category inputs, and the rich-text editor paste handler). Also hardens HTML sanitization to drop comments/unsafe tags before rendering. However, numbered-list preservation in the HTML fallback path and evidence of coverage for *all* editable text surfaces are incomplete.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "After clicking Save on '+ Add Prompt', the newly created prompt appears in the currently active view/filter state as soon as Save completes; after refresh it is still present; on backend failure the dialog stays open and an error toast is shown.",
-      "reason": "Backend persistence and dialog behavior are partially evidenced (dialog closes only on success), but the diff summary is truncated for the save flow wiring (App -> onSave handler -> store update + backend call) and for the error toast on save failure. There is no clear evidence that the prompt is inserted into the in-memory prompt list immediately after a successful save under the current filter/view.",
+      "requirement": "Preserve numbered lists (e.g., \"1.\", \"2.\") when cleaning Word/HTML paste while removing Word HTML/CSS/comment junk.",
+      "reason": "In the HTML fallback path, all <li> elements are prefixed with a bullet character (\"• \") regardless of whether the source list is ordered (<ol>) or unordered (<ul>), so numbering is not preserved when only text/html is available.",
       "evidence": [
-        "frontend/src/components/prompts/PromptEditorDialog.tsx (only closes dialog after awaited onSave; no toast here)",
-        "frontend/src/features/backend/usePromptLibrarySync.ts (savePrompt implementation truncated before showing store update / toasts)",
-        "frontend/src/App.tsx (truncated; onSave wiring and view/filter update not shown)"
+        "frontend/src/features/paste/cleanPastedText.ts (extractTextFromHtml: LI always set to '• ' + textContent)"
       ]
     },
     {
       "id": "REQ-2",
-      "requirement": "New categories created during '+ Add Prompt' are persisted and appear in CategoryFilterBar immediately after saving the prompt and remain after refresh; saving with existing categories does not create duplicates.",
-      "reason": "UI-side category dedupe/add is implemented, and backend category APIs exist, but the sync/persistence path for newly-created categories during prompt save is truncated. Also, immediate appearance in the CategoryFilterBar after saving the prompt depends on store updates after save, which are not fully visible.",
+      "requirement": "Apply paste-cleaning behavior to every user-editable text entry surface in the app (including any other editable fields beyond title/search/category/editor).",
+      "reason": "The diff shows paste handlers added for title, search, new category name, and category rename, plus the rich text editor. The diff summary does not provide evidence that *all other* user-editable fields across the app are covered.",
       "evidence": [
-        "frontend/src/components/categories/CategoryPicker.tsx (adds category to store immediately; does not show backend persistence)",
-        "frontend/src/features/backend/usePromptLibrarySync.ts (logic to find/persist new categories is present but truncated before completion)",
-        "frontend/src/features/backend/promptLibraryApi.ts (saveCategory exists, but no evidence it is invoked successfully in the save flow)",
-        "frontend/src/features/categories/categoryStore.ts (case-insensitive duplicate prevention)"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Clicking a category filters prompts and selecting a prompt in list/grid/table opens the existing prompt preview behavior for that view; app stays on current view after Save.",
-      "reason": "CategoryFilterBar now toggles selection deterministically, but there is no direct diff evidence that category selection is correctly hooked into prompt filtering results and that prompt opening/preview works across list/grid/table in the filtered state. The relevant view components and selection handlers are not shown in the diff summary.",
-      "evidence": [
-        "frontend/src/components/categories/CategoryFilterBar.tsx (only toggles selectedCategory via callback; no filtering/preview logic here)",
-        "frontend/src/App.tsx (truncated; filtering + view-mode prompt-open behavior not verifiable from provided excerpt)"
+        "frontend/src/components/prompts/PromptEditorDialog.tsx (title onPaste only; no evidence of other fields)",
+        "frontend/src/components/search/SearchInput.tsx (onPaste added)",
+        "frontend/src/components/categories/CategoryPicker.tsx (onPaste added)",
+        "frontend/src/components/categories/ManageCategoriesDialog.tsx (onPaste added for rename input; truncated, unknown for other inputs)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Changed persistence strategy to no longer store prompts/categories in browser localStorage and to persist only UI preferences (viewMode).",
-      "reason": "The BuildRequest focuses on fixing '+ Add Prompt' persistence to backend and UI state, not on changing/removing existing localStorage persistence behavior. This may be an implementation choice, but it is not explicitly requested.",
+      "description": "Sanitizer explicitly preserves text color styling on <span> elements (inline color extraction from style/color).",
+      "reason": "REQ-3 only requires preserving the editor’s allowed basic formatting (bold/italic and line breaks) while preventing Word/unsafe nodes from rendering. Color preservation is not requested in the BuildRequest.",
       "evidence": [
-        "frontend-file-summaries.txt (frontend/src/features/storage/localStorage.ts: 'no longer stores prompts or categories')",
-        "frontend-file-summaries.txt (frontend/src/features/storage/useAutoPersist.ts: 'persists only UI preferences (viewMode)')"
+        "frontend/src/features/richText/sanitizeHtml.ts (allowedTags includes 'span'; preserves element.style.color / parses 'color:' from style attr)"
       ]
     }
   ],
-  "confidence": 0.56,
+  "confidence": 0.72,
   "changed_files": [
-    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
-    "frontend/src/components/categories/CategoryFilterBar.tsx",
     "frontend/src/components/categories/CategoryPicker.tsx",
+    "frontend/src/components/categories/ManageCategoriesDialog.tsx",
+    "frontend/src/components/prompts/PromptContent.tsx",
     "frontend/src/components/prompts/PromptEditorDialog.tsx",
-    "frontend/src/features/backend/promptLibraryApi.ts",
-    "frontend/src/features/backend/usePromptLibrarySync.ts",
-    "frontend/src/features/categories/categoryStore.ts",
+    "frontend/src/components/search/SearchInput.tsx",
+    "frontend/src/features/paste/cleanPasteHandlers.ts",
+    "frontend/src/features/paste/cleanPastedText.ts",
+    "frontend/src/features/richText/SimpleRichTextEditor.tsx",
+    "frontend/src/features/richText/sanitizeHtml.ts",
     "project_state.json"
   ]
 }

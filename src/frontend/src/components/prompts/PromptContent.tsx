@@ -7,7 +7,7 @@ interface PromptContentProps {
 }
 
 export function PromptContent({ content, className = '' }: PromptContentProps) {
-  // Sanitize the HTML content before rendering
+  // Sanitize the HTML content before rendering to ensure no Word junk appears
   const sanitizedContent = sanitizeHtml(content);
 
   return (

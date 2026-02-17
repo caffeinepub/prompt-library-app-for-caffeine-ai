@@ -1,83 +1,91 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix Add Prompt persistence for prompts and categories",
+  "title": "Clean Microsoft Word paste across all text inputs while preserving basic formatting",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Make '+ Add Prompt' Save await backend persistence and update in-memory state without closing on failure.",
+      "summary": "Add a client-side paste-cleaning utility that strips Word/HTML/CSS junk and produces clean plain text while preserving basic structure (newlines, bullets/numbering readability, tabs/indentation).",
       "acceptanceCriteria": [
-        "Creating a new prompt (Title + Content + at least one Category) and clicking Save results in the prompt appearing in the currently active view/filter state as soon as Save completes.",
-        "After a full page refresh and re-authentication, the newly created prompt is still present (loaded from the backend).",
-        "If the backend call fails, the dialog remains open and an error toast is shown; the prompt is not silently lost."
+        "When pasting content copied from Microsoft Word, the inserted content contains no HTML tags, CSS, <style> blocks, or HTML comments (e.g., no \"<!-- /* Font Definitions */ ... -->\").",
+        "Line breaks from the source are preserved (paragraph separation remains visually separated after paste).",
+        "Bulleted lists copied from Word paste as readable bullet characters (e.g., •) on their own lines.",
+        "Numbered lists copied from Word paste as readable numbering (e.g., \"1.\", \"2.\") on their own lines (as represented in the clipboard plain text).",
+        "The cleaning utility normalizes common Word whitespace artifacts (e.g., CRLF vs LF, non-breaking spaces) without collapsing all newlines into a single line."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/prompts/PromptEditorDialog.tsx",
-          "operation": "modify",
-          "description": "Change the Save handler to support an async onSave (Promise-based), show a saving/disabled state, and only close the shadcn-ui Dialog after onSave resolves successfully; keep dialog open on error. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/features/paste/cleanPastedText.ts",
+          "operation": "create",
+          "description": "Implement a reusable paste-cleaning utility that prefers clipboard plain text when available, removes Word/HTML/CSS/comment artifacts (including Word-specific HTML comment blocks), normalizes whitespace (CRLF->LF, NBSP->space), preserves tabs/indentation, and derives readable line-based output from HTML only when necessary (e.g., converting list items into lines with bullet/number prefixes)."
         },
         {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Update the prompt save flow to return/await a Promise from the editor, avoid unconditional refresh that can mask save failures, and ensure the saved prompt remains visible under the current filters without forced navigation. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/features/paste/cleanPasteHandlers.ts",
+          "operation": "create",
+          "description": "Add small helper functions to apply the cleaning utility during paste (1) for standard inputs/textarea via selection-aware insertion (e.g., setRangeText) and (2) for contentEditable surfaces via safe text insertion, ensuring cleaning occurs at paste time client-side."
         },
         {
-          "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
+          "path": "frontend/src/features/richText/SimpleRichTextEditor.tsx",
           "operation": "modify",
-          "description": "Harden savePrompt to update Zustand prompt state deterministically (no stale-closure loss), propagate errors so the caller can keep the editor open, and ensure backend-synced prompts are merged without dropping newly created items. Verify the component's usage instructions before implementing."
+          "description": "Update the editor's onPaste behavior to use the new paste-cleaning utility/handler so Word paste inserts clean plain text (preserving line breaks and readable bullets/numbering) rather than Word HTML, preventing CSS/HTML comment blocks from entering the editor value."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Persist new categories created/selected during '+ Add Prompt' and reflect them in the CategoryFilterBar immediately and after refresh, without duplicates.",
+      "summary": "Apply Word paste-cleaning to all user-editable text entry surfaces (prompt editor title, prompt content editor, search input, category create/rename inputs, and any other editable inputs present).",
       "acceptanceCriteria": [
-        "When saving a prompt that includes a brand-new category name, that category appears in the CategoryFilterBar list (under the Favorites button) without requiring a manual refresh action.",
-        "After a full page refresh and re-authentication, the new category is still present in the CategoryFilterBar list (loaded from backend).",
-        "Saving a prompt with only existing categories does not create duplicate categories in the UI list or backend."
+        "Pasting Word content into the “Add New Prompt” title field inserts clean plain text (no HTML/CSS junk).",
+        "Pasting Word content into the prompt content editor inserts clean content with preserved line breaks and list readability, and does not insert CSS/HTML comment blocks.",
+        "Pasting Word content into the search box inserts clean plain text.",
+        "Pasting Word content into category text inputs (e.g., new category name, rename category) inserts clean plain text.",
+        "All paste cleaning is performed client-side at paste time (before saving), so the stored prompt/category strings do not include Word HTML/CSS junk."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
+          "path": "frontend/src/components/prompts/PromptEditorDialog.tsx",
           "operation": "modify",
-          "description": "Ensure saving a prompt also persists any missing categories to the backend (before or alongside prompt save), then updates the category store so CategoryFilterBar reflects the new category immediately; avoid re-creating categories that already exist. Verify the component's usage instructions before implementing."
+          "description": "Wire the paste-cleaning handler into the Title <Input> so pastes are cleaned before they enter component state and before saving."
         },
         {
-          "path": "frontend/src/features/categories/categoryStore.ts",
+          "path": "frontend/src/components/search/SearchInput.tsx",
           "operation": "modify",
-          "description": "Prevent duplicate category entries by enforcing trimmed + case-insensitive uniqueness for add/rename operations, so new categories don't appear multiple times in the filter bar. Verify the component's usage instructions before implementing."
+          "description": "Add an onPaste handler using the shared paste-cleaning helper to ensure pasted Word content becomes clean plain text in the search field."
         },
         {
           "path": "frontend/src/components/categories/CategoryPicker.tsx",
           "operation": "modify",
-          "description": "When creating a category, avoid adding duplicates to selectedCategories (including case/whitespace variants) and ensure the newly created category is selected exactly once for the prompt being edited. Verify the component's usage instructions before implementing."
+          "description": "Add paste-cleaning to the new category name <Input> so Word paste cannot introduce HTML/CSS junk into newly created category names."
         },
         {
-          "path": "frontend/src/features/backend/promptLibraryApi.ts",
+          "path": "frontend/src/components/categories/ManageCategoriesDialog.tsx",
           "operation": "modify",
-          "description": "Align category mapping with the UI’s uniqueness rules (e.g., stable ID generation for equivalent names) to reduce duplicate persistence and improve consistency across refreshes. Verify the component's usage instructions before implementing."
+          "description": "Add paste-cleaning to the rename category <Input> so Word paste cannot introduce HTML/CSS junk into renamed category values."
+        },
+        {
+          "path": "frontend/src/features/richText/SimpleRichTextEditor.tsx",
+          "operation": "modify",
+          "description": "Ensure the content editor paste handler uses the shared cleaning logic (from REQ-1) so Word pastes are cleaned consistently with other inputs."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Fix category selection behavior so clicking a category reliably filters results and remains compatible with the current list/grid/table view behavior.",
+      "summary": "Harden HTML sanitization and rendering so Word-specific and unsafe nodes (style/script/head/meta/link/comments) never show as visible text while preserving allowed basic formatting.",
       "acceptanceCriteria": [
-        "After saving a prompt into a category, clicking that category filters the prompt list to show the prompt(s) in that category.",
-        "In list/grid/table view modes, selecting a prompt in the filtered results opens the existing prompt preview behavior for that view (no broken/empty preview).",
-        "The app stays on the current view after Save (no forced navigation)."
+        "If a prompt’s stored content contains a <style>...</style> block or an HTML comment, those contents are not shown as visible text when rendering prompt previews/details.",
+        "Prompt rendering continues to support the editor’s allowed basic formatting (bold/italic and line breaks) without showing raw HTML/CSS text."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/features/richText/sanitizeHtml.ts",
           "operation": "modify",
-          "description": "Adjust filter state interactions so selecting a category disables Favorites-only mode (instead of intersecting filters unexpectedly), and preserve the active view mode after Save while keeping filtered results stable. Verify the component's usage instructions before implementing."
+          "description": "Update sanitization to explicitly drop (not unwrap) unsafe/Word-noise nodes and their contents (e.g., style/script/head/meta/link) and to ensure HTML comments never become visible text; keep the editor's allowed basic formatting (bold/italic/line breaks and existing safe inline styling) intact."
         },
         {
-          "path": "frontend/src/components/categories/CategoryFilterBar.tsx",
+          "path": "frontend/src/components/prompts/PromptContent.tsx",
           "operation": "modify",
-          "description": "Ensure category click interactions remain deterministic (toggle on/off) and integrate cleanly with the app’s filter state (category vs favorites) so filtering works immediately after saving new categories. Verify the component's usage instructions before implementing."
+          "description": "Confirm prompt display always renders through the hardened sanitizer (and adjust if needed) so any residual HTML noise in stored content cannot appear as visible text in previews/details."
         }
       ]
     }

@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { CategoryPicker } from '../categories/CategoryPicker';
 import { SimpleRichTextEditor } from '../../features/richText/SimpleRichTextEditor';
 import { sanitizeHtml } from '../../features/richText/sanitizeHtml';
+import { createInputPasteHandler } from '../../features/paste/cleanPasteHandlers';
 import { Prompt } from '../../features/prompts/types';
 
 interface PromptEditorDialogProps {
@@ -73,6 +74,9 @@ export function PromptEditorDialog({
     }
   };
 
+  // Create paste handler for title input
+  const handleTitlePaste = createInputPasteHandler(setTitle, () => title);
+
   const isContentEmpty = !content.trim() || content === '<br>';
 
   return (
@@ -93,6 +97,7 @@ export function PromptEditorDialog({
               placeholder="Enter prompt title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onPaste={handleTitlePaste}
               disabled={isSaving}
             />
           </div>
@@ -102,7 +107,7 @@ export function PromptEditorDialog({
             <SimpleRichTextEditor
               value={content}
               onChange={setContent}
-              placeholder="Enter your prompt content here. Use the toolbar to format text with bold, italic, and colors. Paste from Word to preserve formatting."
+              placeholder="Enter your prompt content here. Use the toolbar to format text with bold, italic, and colors."
             />
           </div>
 

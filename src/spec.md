@@ -1,12 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Make “+ Add Prompt” reliably save new prompts and their categories so they immediately appear in the UI, persist after refresh, and category filtering works correctly.
+**Goal:** Ensure pasting from Microsoft Word produces clean, readable text across all user-editable text surfaces, while preserving basic structure (line breaks, bullets, numbering, tabs/indentation).
 
 **Planned changes:**
-- Fix the “+ Add Prompt” Save flow to persist the new prompt to the backend and update in-memory UI state so the prompt appears immediately in the current view/filter after Save completes.
-- Ensure Save error handling keeps the dialog open and shows an error toast if the backend call fails (no silent loss).
-- Persist categories used/created in the prompt editor so new categories appear under Favorites in the CategoryFilterBar immediately after saving and remain after refresh, without creating duplicates for existing categories.
-- Fix CategoryFilterBar click behavior to correctly filter prompts by category and allow opening prompt previews in the currently selected view mode (list/grid/table) without breaking the preview or forcing navigation after Save.
+- Add a client-side paste-cleaning utility to strip Word/HTML/CSS junk (e.g., tags, `<style>` blocks, HTML comments) while normalizing whitespace and preserving line breaks and list readability.
+- Apply the paste-cleaning behavior to every user-editable text entry surface, including the prompt content editor and standard text inputs (titles, search, category create/rename, and any other editable fields).
+- Harden rendering sanitization so that if HTML still enters stored content, Word-specific/unsafe nodes (style/script/head/meta/link and HTML comments) never render as visible text in prompt previews/details while continuing to support allowed basic formatting.
 
-**User-visible outcome:** After creating a prompt (with at least one category) and clicking Save, the prompt and any new category show up right away in the current view; they still exist after refresh/re-authentication; clicking a category filters prompts correctly and prompts open normally in the current view mode.
+**User-visible outcome:** Pasting content from Microsoft Word anywhere in the app inserts clean text without hidden HTML/CSS/comment blocks, keeps line breaks and list structure readable, and any residual unsafe HTML will not display as raw text in prompt views.

@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCategoryStore } from '../../features/categories/categoryStore';
+import { createInputPasteHandler } from '../../features/paste/cleanPasteHandlers';
 
 interface CategoryPickerProps {
   selectedCategories: string[];
@@ -57,6 +58,9 @@ export function CategoryPicker({ selectedCategories, onCategoriesChange }: Categ
     }
   };
 
+  // Create paste handler for new category input
+  const handlePaste = createInputPasteHandler(setNewCategoryName, () => newCategoryName);
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
@@ -64,6 +68,7 @@ export function CategoryPicker({ selectedCategories, onCategoriesChange }: Categ
           placeholder="New category name"
           value={newCategoryName}
           onChange={(e) => setNewCategoryName(e.target.value)}
+          onPaste={handlePaste}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();

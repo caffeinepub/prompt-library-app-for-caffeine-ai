@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCategoryStore } from '../../features/categories/categoryStore';
 import { usePromptStore } from '../../features/prompts/promptStore';
 import { usePromptLibrarySync } from '../../features/backend/usePromptLibrarySync';
+import { createInputPasteHandler } from '../../features/paste/cleanPasteHandlers';
 import { ConfirmDialog } from '../prompts/ConfirmDialog';
 
 interface ManageCategoriesDialogProps {
@@ -66,6 +67,9 @@ export function ManageCategoriesDialog({ open, onOpenChange }: ManageCategoriesD
     setDeleteConfirm(null);
   };
 
+  // Create paste handler for rename input
+  const handlePaste = createInputPasteHandler(setEditValue, () => editValue);
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -94,6 +98,7 @@ export function ManageCategoriesDialog({ open, onOpenChange }: ManageCategoriesD
                         <Input
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
+                          onPaste={handlePaste}
                           className="flex-1"
                           autoFocus
                           onKeyDown={(e) => {

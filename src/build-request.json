@@ -1,76 +1,76 @@
 {
   "kind": "build_request",
-  "title": "Fix '+ Add Prompt' Save to persist prompts and categories",
+  "title": "Clean Microsoft Word paste across all text inputs while preserving basic formatting",
   "projectName": "Prompt Library",
-  "priority": "high",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the '+ Add Prompt' Save flow so a newly created prompt is reliably persisted (backend + in-memory UI state) instead of the dialog closing with the prompt missing.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "When I go to \"+ Add Prompt\"  and fill out the area that I am asked to fill out and then push save, it is not saving.",
-          "closes without keeping prompt"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Creating a new prompt (Title + Content + at least one Category) and clicking Save results in the prompt appearing in the currently active view/filter state as soon as Save completes.",
-        "After a full page refresh and re-authentication, the newly created prompt is still present (loaded from the backend).",
-        "If the backend call fails, the dialog remains open and an error toast is shown; the prompt is not silently lost."
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Ensure categories entered/selected in the prompt editor are persisted so that any new category created during '+ Add Prompt' appears under Favorites in the category filter bar immediately after saving the prompt and remains after refresh.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "a category should be showing and when I click that category it should pop up.",
-          "It should appear right under \"Favorites\"",
-          "I can manually put in a category or pick one that exist."
-        ]
-      },
-      "acceptanceCriteria": [
-        "When saving a prompt that includes a brand-new category name, that category appears in the CategoryFilterBar list (under the Favorites button) without requiring a manual refresh action.",
-        "After a full page refresh and re-authentication, the new category is still present in the CategoryFilterBar list (loaded from backend).",
-        "Saving a prompt with only existing categories does not create duplicate categories in the UI list or backend."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Make clicking a category in the CategoryFilterBar correctly filter and allow opening prompts within that category, using the currently selected view mode (list/grid/table) behavior.",
+      "text": "Implement a paste-cleaning utility that removes Microsoft Word/HTML/CSS junk and yields clean plain text while preserving basic structure (line breaks, bullets, numbering, and tabs/indentation) so that pasting Word content does not insert CSS/HTML comments into the saved text.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "when I click that category it should pop up.",
-          "whichever format I have chosen right next to the Newest First drop box."
+          "However when I paste something from Microsoft Word, it is pasting weird.",
+          "1) Yes\n2) I do want the basic formatting\n3) Everywhere"
         ]
       },
       "acceptanceCriteria": [
-        "After saving a prompt into a category, clicking that category filters the prompt list to show the prompt(s) in that category.",
-        "In list/grid/table view modes, selecting a prompt in the filtered results opens the existing prompt preview behavior for that view (no broken/empty preview).",
-        "The app stays on the current view after Save (no forced navigation)."
+        "When pasting content copied from Microsoft Word, the inserted content contains no HTML tags, CSS, <style> blocks, or HTML comments (e.g., no \"<!-- /* Font Definitions */ ... -->\").",
+        "Line breaks from the source are preserved (paragraph separation remains visually separated after paste).",
+        "Bulleted lists copied from Word paste as readable bullet characters (e.g., •) on their own lines.",
+        "Numbered lists copied from Word paste as readable numbering (e.g., \"1.\", \"2.\") on their own lines (as represented in the clipboard plain text).",
+        "The cleaning utility normalizes common Word whitespace artifacts (e.g., CRLF vs LF, non-breaking spaces) without collapsing all newlines into a single line."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Apply the Word paste-cleaning behavior to every user-editable text entry surface in the app, including the rich text prompt content editor and all standard text inputs used for titles, search, category creation/rename, and any other editable fields present in the UI.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "3) Everywhere"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Pasting Word content into the “Add New Prompt” title field inserts clean plain text (no HTML/CSS junk).",
+        "Pasting Word content into the prompt content editor inserts clean content with preserved line breaks and list readability, and does not insert CSS/HTML comment blocks.",
+        "Pasting Word content into the search box inserts clean plain text.",
+        "Pasting Word content into category text inputs (e.g., new category name, rename category) inserts clean plain text.",
+        "All paste cleaning is performed client-side at paste time (before saving), so the stored prompt/category strings do not include Word HTML/CSS junk."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Harden HTML sanitization so that if any HTML is still introduced (e.g., via non-Word sources or browser quirks), Word-specific and unsafe nodes (such as style/script/head/meta/link and HTML comments) never render as visible text in prompt display components.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Microsoft Word is pasting a huge block of hidden HTML/CSS into your prompt field."
+        ]
+      },
+      "acceptanceCriteria": [
+        "If a prompt’s stored content contains a <style>...</style> block or an HTML comment, those contents are not shown as visible text when rendering prompt previews/details.",
+        "Prompt rendering continues to support the editor’s allowed basic formatting (bold/italic and line breaks) without showing raw HTML/CSS text."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Do not modify files under frontend/src/components/ui or any path listed in frontend.immutablePaths."
+    "Do not edit files under frontend/src/components/ui (read-only UI component sources must be composed, not edited).",
+    "Do not edit any paths listed in SYSTEM_CONTEXT.frontend.immutablePaths (compose alternatives instead).",
+    "Do not add any third-party authentication or external service dependencies; keep paste cleanup fully client-side."
   ],
   "nonGoals": [
-    "Implementing new sorting modes, new view modes, or a new navigation system.",
-    "Changing authentication provider behavior (Internet Identity only).",
-    "Adding external databases or third-party storage."
+    "Do not preserve rich Word styling (fonts, sizes, margins, complex tables) beyond basic plain-text structure (line breaks, bullets, numbering).",
+    "Do not change backend schemas or Motoko canister logic for this request."
   ],
   "imageRequirements": {
     "required": [],

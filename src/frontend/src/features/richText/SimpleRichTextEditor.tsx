@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Bold, Italic, Type } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { sanitizeHtml } from './sanitizeHtml';
+import { createContentEditablePasteHandler } from '../paste/cleanPasteHandlers';
 
 interface SimpleRichTextEditorProps {
   value: string;
@@ -62,46 +62,8 @@ export function SimpleRichTextEditor({
     execCommand('foreColor', color);
   }, [execCommand]);
 
-  const handlePaste = useCallback((e: React.ClipboardEvent) => {
-    e.preventDefault();
-    
-    // Try to get HTML from clipboard (preserves Word formatting)
-    const html = e.clipboardData.getData('text/html');
-    
-    if (html) {
-      // Sanitize the HTML to keep only safe formatting including colors
-      const sanitized = sanitizeHtml(html);
-      
-      // Insert sanitized HTML at cursor position
-      const selection = window.getSelection();
-      if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        range.deleteContents();
-        
-        const temp = document.createElement('div');
-        temp.innerHTML = sanitized;
-        
-        const fragment = document.createDocumentFragment();
-        let node;
-        while ((node = temp.firstChild)) {
-          fragment.appendChild(node);
-        }
-        
-        range.insertNode(fragment);
-        
-        // Move cursor to end of inserted content
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-    } else {
-      // Fallback to plain text if no HTML available
-      const text = e.clipboardData.getData('text/plain');
-      document.execCommand('insertText', false, text);
-    }
-    
-    handleInput();
-  }, [handleInput]);
+  // Use the shared paste cleaning handler
+  const handlePaste = createContentEditablePasteHandler(handleInput);
 
   return (
     <div className={`border rounded-md ${className}`}>

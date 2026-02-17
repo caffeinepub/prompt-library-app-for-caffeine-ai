@@ -1,7 +1,7 @@
 /**
  * Sanitizes HTML content to allow only safe formatting tags and attributes
  * produced by the rich text editor (bold, italic, and color spans).
- * Enhanced to better preserve Word paste formatting including colors.
+ * Drops unsafe/Word-noise nodes (style/script/head/meta/link/comments) entirely.
  */
 export function sanitizeHtml(html: string): string {
   // Create a temporary DOM element to parse the HTML
@@ -15,10 +15,21 @@ export function sanitizeHtml(html: string): string {
       return node.cloneNode(false);
     }
 
+    // Drop comment nodes entirely
+    if (node.nodeType === Node.COMMENT_NODE) {
+      return null;
+    }
+
     // Only allow specific element nodes
     if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as HTMLElement;
       const tagName = element.tagName.toLowerCase();
+
+      // Drop unsafe/noise tags entirely (including their contents)
+      const unsafeTags = ['style', 'script', 'head', 'meta', 'link', 'title', 'base'];
+      if (unsafeTags.includes(tagName)) {
+        return null;
+      }
 
       // Allowed tags
       const allowedTags = ['b', 'strong', 'i', 'em', 'span', 'br', 'p', 'div'];
