@@ -18,14 +18,17 @@ import { PromptGridView } from './components/prompts/PromptGridView';
 import { PromptTableView } from './components/prompts/PromptTableView';
 import { SignInScreen } from './components/auth/SignInScreen';
 import { usePromptStore } from './features/prompts/promptStore';
+import { useCategoryStore } from './features/categories/categoryStore';
 import { filterPrompts } from './features/prompts/filtering';
 import { sortPrompts } from './features/prompts/sorting';
 import { useAutoPersist } from './features/storage/useAutoPersist';
 import { loadFromStorage } from './features/storage/localStorage';
+import { usePromptLibrarySync } from './features/backend/usePromptLibrarySync';
 import { ViewMode, SortMode, Prompt } from './features/prompts/types';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
 import { useReliableIILogout } from './features/auth/useReliableIILogout';
 import { checkAndClearLogoutPending } from './features/auth/iiProviderLogout';
+import { useQueryClient } from '@tanstack/react-query';
 
 function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -41,13 +44,15 @@ function App() {
 
   const { login, identity, isLoggingIn, isInitializing } = useInternetIdentity();
   const { logout: performLogout, isLoggingOut, lastError: logoutError } = useReliableIILogout();
+  const queryClient = useQueryClient();
 
   const prompts = usePromptStore((state) => state.prompts);
-  const addPrompt = usePromptStore((state) => state.addPrompt);
-  const updatePrompt = usePromptStore((state) => state.updatePrompt);
-  const deletePrompt = usePromptStore((state) => state.deletePrompt);
-  const duplicatePrompt = usePromptStore((state) => state.duplicatePrompt);
   const toggleFavorite = usePromptStore((state) => state.toggleFavorite);
+  const clearPrompts = usePromptStore((state) => state.clearPrompts);
+  const clearCategories = useCategoryStore((state) => state.clearCategories);
+
+  // Backend sync
+  const { isReady, savePrompt, deletePrompt: deletePromptBackend, refreshFromBackend } = usePromptLibrarySync();
 
   // Check if user is authenticated
   const isAuthenticated = identity && !identity.getPrincipal().isAnonymous();
@@ -89,7 +94,7 @@ function App() {
     }
   }, []);
 
-  // Auto-persist
+  // Auto-persist UI preferences only
   useAutoPersist(viewMode);
 
   // If not authenticated, show sign-in screen
@@ -119,11 +124,29 @@ function App() {
     setEditorOpen(true);
   };
 
-  const handleSavePrompt = (data: Omit<Prompt, 'id' | 'dateAdded' | 'dateModified'>) => {
-    if (editingPrompt) {
-      updatePrompt(editingPrompt.id, data);
-    } else {
-      addPrompt(data);
+  const handleSavePrompt = async (data: Omit<Prompt, 'id' | 'dateAdded' | 'dateModified'>) => {
+    try {
+      if (editingPrompt) {
+        // Update existing prompt
+        const updatedPrompt = {
+          ...editingPrompt,
+          ...data,
+          dateModified: Date.now(),
+        };
+        await savePrompt(updatedPrompt);
+      } else {
+        // Create new prompt
+        const newPrompt: Prompt = {
+          ...data,
+          id: `prompt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          dateAdded: Date.now(),
+          dateModified: Date.now(),
+        };
+        await savePrompt(newPrompt);
+      }
+      await refreshFromBackend();
+    } catch (error) {
+      // Error already shown by sync hook
     }
   };
 
@@ -131,10 +154,35 @@ function App() {
     setDeleteConfirm(id);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deleteConfirm) {
-      deletePrompt(deleteConfirm);
+      try {
+        await deletePromptBackend(deleteConfirm);
+        await refreshFromBackend();
+      } catch (error) {
+        // Error already shown by sync hook
+      }
       setDeleteConfirm(null);
+    }
+  };
+
+  const handleDuplicate = async (id: string) => {
+    const original = prompts.find((p) => p.id === id);
+    if (!original) return;
+
+    const duplicated: Prompt = {
+      ...original,
+      id: `prompt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title: `${original.title} (Copy)`,
+      dateAdded: Date.now(),
+      dateModified: Date.now(),
+    };
+
+    try {
+      await savePrompt(duplicated);
+      await refreshFromBackend();
+    } catch (error) {
+      // Error already shown by sync hook
     }
   };
 
@@ -151,8 +199,16 @@ function App() {
     setSearchQuery('');
   };
 
-  const handleLogOff = () => {
-    performLogout();
+  const handleLogOff = async () => {
+    // Clear in-memory state
+    clearPrompts();
+    clearCategories();
+    
+    // Clear query cache
+    queryClient.clear();
+    
+    // Perform logout
+    await performLogout();
   };
 
   const appIdentifier = encodeURIComponent(window.location.hostname || 'prompt-library');
@@ -236,7 +292,7 @@ function App() {
                 prompts={sortedPrompts}
                 onEdit={handleEditPrompt}
                 onDelete={handleDeleteClick}
-                onDuplicate={duplicatePrompt}
+                onDuplicate={handleDuplicate}
                 onToggleFavorite={toggleFavorite}
               />
             )}
@@ -245,7 +301,7 @@ function App() {
                 prompts={sortedPrompts}
                 onEdit={handleEditPrompt}
                 onDelete={handleDeleteClick}
-                onDuplicate={duplicatePrompt}
+                onDuplicate={handleDuplicate}
                 onToggleFavorite={toggleFavorite}
               />
             )}
@@ -254,7 +310,7 @@ function App() {
                 prompts={sortedPrompts}
                 onEdit={handleEditPrompt}
                 onDelete={handleDeleteClick}
-                onDuplicate={duplicatePrompt}
+                onDuplicate={handleDuplicate}
                 onToggleFavorite={toggleFavorite}
               />
             )}

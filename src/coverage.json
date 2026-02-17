@@ -1,62 +1,110 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T18:54:00.994Z",
+  "generatedAt": "2026-02-17T20:06:06.659Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
+    "total": 4,
     "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add the uploaded image file `prompt-library-favicon.png` to the frontend static assets so it is served publicly (e.g., via the frontend public folder) and can be referenced by URL at runtime.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/public/assets/generated/prompt-library-favicon.png",
-          "frontend/public/assets/generated/favicon.dim_32x32.png",
-          "frontend/public/assets/generated/favicon.dim_16x16.png"
-        ],
-        "matchedFiles": [
-          "frontend/public/assets/generated/favicon.dim_32x32.png",
-          "frontend/public/assets/generated/favicon.dim_16x16.png"
-        ]
+        "summary": "Implement backend persistence for the prompt library so that prompts (including rich-text HTML content with color formatting), categories, and related metadata are stored per authenticated user (Internet Identity principal) and can be loaded back reliably after refresh/search.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Replace the app’s current favicon implementation so the browser tab uses the uploaded icon as the site favicon (replacing any existing favicon). Ensure the favicon is applied on initial page load.",
+        "summary": "Update the frontend data flow to load prompts/categories from the backend after login and to save all prompt edits (including text color changes) to the backend, so that searching for a saved prompt displays the same rich-text colors originally saved.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/favicon.ts"
+          "frontend/src/features/backend/promptLibraryApi.ts",
+          "frontend/src/features/backend/usePromptLibrarySync.ts",
+          "frontend/src/features/storage/useAutoPersist.ts",
+          "frontend/src/features/storage/localStorage.ts",
+          "frontend/src/features/prompts/promptStore.ts",
+          "frontend/src/features/categories/categoryStore.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/components/categories/ManageCategoriesDialog.tsx",
+          "frontend/src/components/importExport/ImportExportControls.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/lib/favicon.ts"
+          "frontend/src/features/backend/promptLibraryApi.ts",
+          "frontend/src/features/backend/usePromptLibrarySync.ts",
+          "frontend/src/features/storage/useAutoPersist.ts",
+          "frontend/src/features/storage/localStorage.ts",
+          "frontend/src/features/prompts/promptStore.ts",
+          "frontend/src/features/categories/categoryStore.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/components/categories/ManageCategoriesDialog.tsx",
+          "frontend/src/components/importExport/ImportExportControls.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Update `frontend/index.html` (and/or the existing favicon utility usage) to include a proper `<link rel=\"icon\" ...>` referencing the new favicon asset, without adding any additional UI elements or in-app branding changes.",
+        "summary": "Fix rich-text paste handling in the \"+ Add Prompt\" / prompt editor so that pasting formatted text from Microsoft Word preserves supported formatting (especially text colors) by capturing clipboard HTML when available and sanitizing it into the app’s allowed HTML subset.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/features/richText/SimpleRichTextEditor.tsx",
+          "frontend/src/features/richText/sanitizeHtml.ts",
+          "frontend/src/components/prompts/PromptEditorDialog.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/features/richText/SimpleRichTextEditor.tsx",
+          "frontend/src/features/richText/sanitizeHtml.ts",
+          "frontend/src/components/prompts/PromptEditorDialog.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Set the uploaded image as the app’s browser-tab favicon by generating the required favicon PNG sizes and ensuring the HTML favicon links reference those generated assets.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/public/assets/generated/favicon.dim_16x16.png",
+          "frontend/public/assets/generated/favicon.dim_32x32.png",
           "frontend/index.html"
         ],
         "matchedFiles": [
-          "frontend/index.html"
+          "frontend/public/assets/generated/favicon.dim_16x16.png",
+          "frontend/public/assets/generated/favicon.dim_32x32.png"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/authorization/MixinAuthorization.mo",
+    "backend/authorization/access-control.mo",
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
+    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/index.html",
     "frontend/public/assets/generated/favicon.dim_16x16.png",
     "frontend/public/assets/generated/favicon.dim_32x32.png",
-    "frontend/src/lib/favicon.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/categories/ManageCategoriesDialog.tsx",
+    "frontend/src/components/importExport/ImportExportControls.tsx",
+    "frontend/src/components/prompts/PromptEditorDialog.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/features/backend/promptLibraryApi.ts",
+    "frontend/src/features/backend/usePromptLibrarySync.ts",
+    "frontend/src/features/categories/categoryStore.ts",
+    "frontend/src/features/prompts/promptStore.ts",
+    "frontend/src/features/richText/SimpleRichTextEditor.tsx",
+    "frontend/src/features/richText/sanitizeHtml.ts",
+    "frontend/src/features/storage/localStorage.ts",
+    "frontend/src/features/storage/useAutoPersist.ts",
+    "frontend/src/hooks/useActor.ts",
+    "frontend/src/utils/urlParams.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

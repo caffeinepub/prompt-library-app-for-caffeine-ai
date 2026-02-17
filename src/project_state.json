@@ -1,33 +1,38 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
-  "architectural_notes": [],
-  "known_issues": [],
-  "isFixRequest": false,
-  "imageRequirements": "## Edit Images\n- Convert/resize the uploaded icon for a standard favicon size (prompt-library-favicon.png > favicon.dim_32x32.png)\n- Optionally generate a small favicon size for broader browser support (prompt-library-favicon.png > favicon.dim_16x16.png)",
+  "summary": "App with a prompt library where users can add and search prompts; needs rich-text (color) formatting to persist via backend and display correctly in search results, and a custom favicon on the main tab.",
+  "architectural_notes": [
+    "Rich-text prompt content must be persisted in the backend (not UI-only) and rendered with formatting in search results.",
+    "Input should accept and preserve formatting when pasting from Microsoft Word (e.g., via HTML/RTF-to-storable format handling)."
+  ],
+  "known_issues": [
+    "Saved prompt text colors/formatting are lost (reset to black) when searching/retrieving prompts."
+  ],
+  "isFixRequest": true,
+  "imageRequirements": "## Required Images\n- Square favicon image from the uploaded icon (favicon.dim_32x32.png)\n- Square favicon image from the uploaded icon (favicon.dim_16x16.png)",
   "existing_features": [
     {
-      "id": "feature-add-the-uploaded-image-file-prompt-library-favicon-png-to-the-frontend-static-assets-so-it-is-served-publicly-e-g-via-the-frontend-public-folder-and-can-be-referenced-by-url-at-runtime",
-      "title": "Add the uploaded image file `prompt-library-favicon.png` to the frontend static assets so it is served publicly (e.g., via the frontend public folder) and can be referenced by URL at runtime.",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-replace-the-app-s-current-favicon-implementation-so-the-browser-tab-uses-the-uploaded-icon-as-the-site-favicon-replacing-any-existing-favicon-ensure-the-favicon-is-applied-on-initial-page-load",
-      "title": "Replace the app’s current favicon implementation so the browser tab uses the uploaded icon as the site favicon (replacing any existing favicon). Ensure the favicon is applied on initial page load.",
+      "id": "feature-update-the-frontend-data-flow-to-load-prompts-categories-from-the-backend-after-login-and-to-save-all-prompt-edits-including-text-color-changes-to-the-backend-so-that-searching-for-a-saved-prompt-displays-the-same-rich-text-colors-originally-saved",
+      "title": "Update the frontend data flow to load prompts/categories from the backend after login and to save all prompt edits (including text color changes) to the backend, so that searching for a saved prompt displays the same rich-text colors originally saved.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-frontend-index-html-and-or-the-existing-favicon-utility-usage-to-include-a-proper-link-rel-icon-referencing-the-new-favicon-asset-without-adding-any-additional-ui-elements-or-in-app-branding-changes",
-      "title": "Update `frontend/index.html` (and/or the existing favicon utility usage) to include a proper `<link rel=\"icon\" ...>` referencing the new favicon asset, without adding any additional UI elements or in-app branding changes.",
+      "id": "feature-fix-rich-text-paste-handling-in-the-add-prompt-prompt-editor-so-that-pasting-formatted-text-from-microsoft-word-preserves-supported-formatting-especially-text-colors-by-capturing-clipboard-html-when-available-and-sanitizing-it-into-the-app-s-allowed-html-subset",
+      "title": "Fix rich-text paste handling in the \"+ Add Prompt\" / prompt editor so that pasting formatted text from Microsoft Word preserves supported formatting (especially text colors) by capturing clipboard HTML when available and sanitizing it into the app’s allowed HTML subset.",
       "reqIds": [
         "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-set-the-uploaded-image-as-the-app-s-browser-tab-favicon-by-generating-the-required-favicon-png-sizes-and-ensuring-the-html-favicon-links-reference-those-generated-assets",
+      "title": "Set the uploaded image as the app’s browser-tab favicon by generating the required favicon PNG sizes and ensuring the HTML favicon links reference those generated assets.",
+      "reqIds": [
+        "REQ-4"
       ],
       "version": 1
     }
@@ -35,8 +40,28 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Use the app icon as the site favicon shown in the browser tab (replace existing favicon if present)",
+      "summary": "Preserve rich-text formatting (especially text colors) when saving prompts to the backend and retrieving/displaying them in search results.",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Support pasting formatted text from Microsoft Word into \"+ Add Prompt\" and store/read the pasted formatting (colors, etc.) as-is.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Set the provided image as the favicon for the main tab only (not globally across all pages).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Implement backend persistence for the prompt library so that prompts (including rich-text HTML content with color formatting), categories, and related metadata are stored per authenticated user (Internet Identity principal) and can be loaded back reliably after refresh/search.",
+      "reqIds": [
+        "REQ-1"
+      ],
       "status": "pending"
     }
   ],

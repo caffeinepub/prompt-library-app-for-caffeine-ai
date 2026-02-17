@@ -92,7 +92,7 @@ export function PromptEditorDialog({
             <SimpleRichTextEditor
               value={content}
               onChange={setContent}
-              placeholder="Enter your prompt content here. Use the toolbar to format text with bold, italic, and colors."
+              placeholder="Enter your prompt content here. Use the toolbar to format text with bold, italic, and colors. Paste from Word to preserve formatting."
             />
           </div>
 

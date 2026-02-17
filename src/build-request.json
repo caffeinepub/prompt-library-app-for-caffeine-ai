@@ -1,87 +1,99 @@
 {
   "kind": "build_request",
-  "title": "Use uploaded app icon as browser tab favicon",
+  "title": "Persist rich-text prompt colors in backend and set uploaded favicon",
   "projectName": "Prompt Library",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add the uploaded image file `prompt-library-favicon.png` to the frontend static assets so it is served publicly (e.g., via the frontend public folder) and can be referenced by URL at runtime.",
-      "target": "frontend",
+      "text": "Implement backend persistence for the prompt library so that prompts (including rich-text HTML content with color formatting), categories, and related metadata are stored per authenticated user (Internet Identity principal) and can be loaded back reliably after refresh/search.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-8"
         ],
         "quotes": [
-          "Can you make the icon of this app the favicon as well?",
-          "That is what I want for the favicon."
+          "Yes - the backend. And it would be nice if when I paste a prompt into the \"+ Add Prompt\", that has the colors already added in, that it will read that."
         ]
       },
       "acceptanceCriteria": [
-        "`prompt-library-favicon.png` (or a derived favicon file created from it) is present in the frontend’s publicly served static assets so it can be loaded by the browser without backend involvement."
+        "Backend exposes actor methods to create, read/list, update, and delete prompts, and to read/write categories (or derive categories from prompts), scoped to the caller principal.",
+        "Prompt.content is stored and returned as an HTML string without stripping inline color styling that is allowed by the app sanitizer.",
+        "Unauthenticated/anonymous users cannot read or write persisted data (must require authenticated principal).",
+        "Data returned from backend round-trips without changing stored prompt HTML beyond normal sanitation rules (no forced reset to black)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Replace the app’s current favicon implementation so the browser tab uses the uploaded icon as the site favicon (replacing any existing favicon). Ensure the favicon is applied on initial page load.",
-      "target": "frontend",
+      "text": "Update the frontend data flow to load prompts/categories from the backend after login and to save all prompt edits (including text color changes) to the backend, so that searching for a saved prompt displays the same rich-text colors originally saved.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-10"
         ],
         "quotes": [
-          "I just want the favicon to show on the tab of the page. Nothing else.",
-          "Just the tab."
+          "When I add a prompt into the library it lets me change all the colors I want. Once I save it and then search for the prompt none of the text is colored. Can you fix that?"
         ]
       },
       "acceptanceCriteria": [
-        "When loading the app in a browser, the tab displays the new favicon based on `prompt-library-favicon.png`.",
-        "Any existing favicon mechanism (including the embedded base64 favicon in `frontend/src/lib/favicon.ts`) no longer determines the tab icon."
+        "After login, the app fetches prompts/categories from the backend and populates the existing Zustand stores used by the UI.",
+        "Creating a prompt, editing a prompt (including color changes), deleting, duplicating, and toggling favorite update the backend and then reflect in the UI.",
+        "Search results and prompt previews render the stored prompt content via the existing PromptContent component (sanitized HTML) and preserve text colors (do not revert to black).",
+        "localStorage auto-persist is no longer the source of truth for prompts/categories once backend persistence is enabled (no overwriting backend-sourced rich text with stale local data)."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Update `frontend/index.html` (and/or the existing favicon utility usage) to include a proper `<link rel=\"icon\" ...>` referencing the new favicon asset, without adding any additional UI elements or in-app branding changes.",
+      "text": "Fix rich-text paste handling in the \"+ Add Prompt\" / prompt editor so that pasting formatted text from Microsoft Word preserves supported formatting (especially text colors) by capturing clipboard HTML when available and sanitizing it into the app’s allowed HTML subset.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-7"
         ],
         "quotes": [
-          "I just want the favicon to show on the tab of the page. Nothing else."
+          "Don't know, but I am bringing the text from Microsoft Word"
         ]
       },
       "acceptanceCriteria": [
-        "`frontend/index.html` includes a favicon link tag (or equivalent initialization occurs before the app renders) that points to the new favicon asset.",
-        "No visible UI components, headers, logos, or in-app icons are changed as part of this request."
+        "Pasting from Microsoft Word into the rich text editor keeps text color formatting when the clipboard provides HTML (do not force plaintext-only paste).",
+        "The pasted content is sanitized to the app’s safe subset while preserving text color styling where present (e.g., span color styles).",
+        "Saving the prompt after a Word paste and then searching/opening the prompt shows the same colors as pasted (within supported formatting)."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Set the uploaded image as the app’s browser-tab favicon by generating the required favicon PNG sizes and ensuring the HTML favicon links reference those generated assets.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "recent-6"
+        ],
+        "quotes": [
+          "Okay - can you make this image the favicon?"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The favicon displayed in the browser tab matches the uploaded image.",
+        "frontend/index.html references the generated favicon files under /assets/generated/ for 16x16 and 32x32 PNG sizes.",
+        "No favicon changes are required beyond the main app tab/favicon behavior."
       ]
     }
   ],
   "constraints": [
-    "Frontend immutable paths (if any) must not be edited; compose existing UI components rather than modifying read-only component sources.",
-    "Do not add new backend functionality; this change must be handled entirely in the frontend/static assets."
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Do not edit files under frontend/src/components/ui (read-only).",
+    "Do not edit immutable paths listed in SYSTEM_CONTEXT (compose instead)."
   ],
   "nonGoals": [
-    "Adding PWA/manifest icons, apple-touch-icons, Android home screen icons, or splash screens.",
-    "Changing the in-app header/logo or any other UI branding beyond the browser tab favicon."
+    "Adding third-party authentication providers (only Internet Identity).",
+    "Real-time collaboration or multi-user shared libraries beyond per-principal storage.",
+    "Supporting every Microsoft Word formatting feature (e.g., fonts, margins, tables); only preserve safe rich-text formatting with emphasis on text colors."
   ],
   "imageRequirements": {
-    "required": [],
-    "edits": [
-      "Convert/resize the uploaded icon for a standard favicon size (prompt-library-favicon.png > favicon.dim_32x32.png)",
-      "Optionally generate a small favicon size for broader browser support (prompt-library-favicon.png > favicon.dim_16x16.png)"
-    ]
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [
-      "Use English for user-facing text"
+    "required": [
+      "Square favicon image from the uploaded icon (favicon.dim_32x32.png)",
+      "Square favicon image from the uploaded icon (favicon.dim_16x16.png)"
     ],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
+    "edits": []
   }
 }

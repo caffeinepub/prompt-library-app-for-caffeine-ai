@@ -6,6 +6,7 @@ interface CategoryStore {
   renameCategory: (oldName: string, newName: string) => void;
   deleteCategory: (name: string) => void;
   setCategories: (categories: string[]) => void;
+  clearCategories: () => void;
 }
 
 export const useCategoryStore = create<CategoryStore>((set) => ({
@@ -34,4 +35,6 @@ export const useCategoryStore = create<CategoryStore>((set) => ({
   })),
   
   setCategories: (categories) => set({ categories }),
+  
+  clearCategories: () => set({ categories: [] }),
 }));

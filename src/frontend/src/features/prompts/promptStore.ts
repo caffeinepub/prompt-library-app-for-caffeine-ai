@@ -10,6 +10,7 @@ interface PromptStore {
   duplicatePrompt: (id: string) => void;
   toggleFavorite: (id: string) => void;
   setPrompts: (prompts: Prompt[]) => void;
+  clearPrompts: () => void;
   removeCategoryFromPrompts: (category: string) => void;
   renameCategoryInPrompts: (oldName: string, newName: string) => void;
 }
@@ -68,6 +69,8 @@ export const usePromptStore = create<PromptStore>((set) => ({
   })),
   
   setPrompts: (prompts) => set({ prompts }),
+  
+  clearPrompts: () => set({ prompts: [] }),
   
   removeCategoryFromPrompts: (category) => set((state) => ({
     prompts: state.prompts.map((p) => ({

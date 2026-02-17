@@ -8,10 +8,78 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
-export const idlService = IDL.Service({});
+export const UserRole = IDL.Variant({
+  'admin' : IDL.Null,
+  'user' : IDL.Null,
+  'guest' : IDL.Null,
+});
+export const Category = IDL.Record({
+  'id' : IDL.Text,
+  'name' : IDL.Text,
+  'description' : IDL.Text,
+});
+export const Prompt = IDL.Record({
+  'id' : IDL.Text,
+  'categories' : IDL.Vec(IDL.Text),
+  'title' : IDL.Text,
+  'content' : IDL.Text,
+  'tags' : IDL.Vec(IDL.Text),
+  'author' : IDL.Text,
+});
+
+export const idlService = IDL.Service({
+  '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'deleteCategory' : IDL.Func([IDL.Text], [], []),
+  'deletePrompt' : IDL.Func([IDL.Text], [], []),
+  'getAllCategories' : IDL.Func([], [IDL.Vec(Category)], ['query']),
+  'getAllPrompts' : IDL.Func([], [IDL.Vec(Prompt)], ['query']),
+  'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getCategory' : IDL.Func([IDL.Text], [IDL.Opt(Category)], ['query']),
+  'getPrompt' : IDL.Func([IDL.Text], [IDL.Opt(Prompt)], ['query']),
+  'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'saveCategory' : IDL.Func([Category], [], []),
+  'savePrompt' : IDL.Func([Prompt], [], []),
+  'searchPrompts' : IDL.Func([IDL.Text], [IDL.Vec(Prompt)], ['query']),
+});
 
 export const idlInitArgs = [];
 
-export const idlFactory = ({ IDL }) => { return IDL.Service({}); };
+export const idlFactory = ({ IDL }) => {
+  const UserRole = IDL.Variant({
+    'admin' : IDL.Null,
+    'user' : IDL.Null,
+    'guest' : IDL.Null,
+  });
+  const Category = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const Prompt = IDL.Record({
+    'id' : IDL.Text,
+    'categories' : IDL.Vec(IDL.Text),
+    'title' : IDL.Text,
+    'content' : IDL.Text,
+    'tags' : IDL.Vec(IDL.Text),
+    'author' : IDL.Text,
+  });
+  
+  return IDL.Service({
+    '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'deleteCategory' : IDL.Func([IDL.Text], [], []),
+    'deletePrompt' : IDL.Func([IDL.Text], [], []),
+    'getAllCategories' : IDL.Func([], [IDL.Vec(Category)], ['query']),
+    'getAllPrompts' : IDL.Func([], [IDL.Vec(Prompt)], ['query']),
+    'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getCategory' : IDL.Func([IDL.Text], [IDL.Opt(Category)], ['query']),
+    'getPrompt' : IDL.Func([IDL.Text], [IDL.Opt(Prompt)], ['query']),
+    'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'saveCategory' : IDL.Func([Category], [], []),
+    'savePrompt' : IDL.Func([Prompt], [], []),
+    'searchPrompts' : IDL.Func([IDL.Text], [IDL.Vec(Prompt)], ['query']),
+  });
+};
 
 export const init = ({ IDL }) => { return []; };

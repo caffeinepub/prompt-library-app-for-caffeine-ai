@@ -1,11 +1,9 @@
-import { Prompt } from '../prompts/types';
+import { ViewMode } from '../prompts/types';
 
-const STORAGE_KEY = 'prompt-library-data';
+const STORAGE_KEY = 'prompt-library-ui-prefs';
 
 export interface StorageData {
-  prompts: Prompt[];
-  categories: string[];
-  viewMode: string;
+  viewMode: ViewMode;
 }
 
 export function loadFromStorage(): StorageData | null {

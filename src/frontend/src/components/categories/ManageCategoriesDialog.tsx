@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCategoryStore } from '../../features/categories/categoryStore';
 import { usePromptStore } from '../../features/prompts/promptStore';
+import { usePromptLibrarySync } from '../../features/backend/usePromptLibrarySync';
 import { ConfirmDialog } from '../prompts/ConfirmDialog';
 
 interface ManageCategoriesDialogProps {
@@ -21,11 +22,8 @@ interface ManageCategoriesDialogProps {
 
 export function ManageCategoriesDialog({ open, onOpenChange }: ManageCategoriesDialogProps) {
   const categories = useCategoryStore((state) => state.categories);
-  const renameCategory = useCategoryStore((state) => state.renameCategory);
-  const deleteCategory = useCategoryStore((state) => state.deleteCategory);
   const prompts = usePromptStore((state) => state.prompts);
-  const removeCategoryFromPrompts = usePromptStore((state) => state.removeCategoryFromPrompts);
-  const renameCategoryInPrompts = usePromptStore((state) => state.renameCategoryInPrompts);
+  const { renameCategory, deleteCategory } = usePromptLibrarySync();
 
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -40,16 +38,18 @@ export function ManageCategoriesDialog({ open, onOpenChange }: ManageCategoriesD
     setEditValue(category);
   };
 
-  const handleSaveEdit = () => {
-    if (editingCategory && editValue.trim() && editValue !== editingCategory) {
-      renameCategory(editingCategory, editValue.trim());
-      renameCategoryInPrompts(editingCategory, editValue.trim());
-    }
+  const handleCancelEdit = () => {
     setEditingCategory(null);
     setEditValue('');
   };
 
-  const handleCancelEdit = () => {
+  const handleSaveEdit = async () => {
+    if (!editingCategory || !editValue.trim()) return;
+    
+    if (editValue.trim() !== editingCategory) {
+      await renameCategory(editingCategory, editValue.trim());
+    }
+    
     setEditingCategory(null);
     setEditValue('');
   };
@@ -59,18 +59,17 @@ export function ManageCategoriesDialog({ open, onOpenChange }: ManageCategoriesD
     setDeleteConfirm({ category, count });
   };
 
-  const handleConfirmDelete = () => {
-    if (deleteConfirm) {
-      deleteCategory(deleteConfirm.category);
-      removeCategoryFromPrompts(deleteConfirm.category);
-      setDeleteConfirm(null);
-    }
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirm) return;
+    
+    await deleteCategory(deleteConfirm.category);
+    setDeleteConfirm(null);
   };
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Manage Categories</DialogTitle>
             <DialogDescription>
@@ -78,67 +77,75 @@ export function ManageCategoriesDialog({ open, onOpenChange }: ManageCategoriesD
             </DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="h-96 rounded-md border p-4">
-            {categories.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No categories yet. Add categories when creating prompts.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {categories.map((category) => (
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-2">
+              {categories.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No categories yet. Create one when adding a prompt.
+                </p>
+              ) : (
+                categories.map((category) => (
                   <div
                     key={category}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                    className="flex items-center gap-2 p-2 rounded-md border bg-card hover:bg-accent/50 transition-colors"
                   >
                     {editingCategory === category ? (
-                      <div className="flex items-center gap-2 flex-1">
+                      <>
                         <Input
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
+                          className="flex-1"
+                          autoFocus
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') handleSaveEdit();
                             if (e.key === 'Escape') handleCancelEdit();
                           }}
-                          autoFocus
                         />
-                        <Button size="icon" variant="ghost" onClick={handleSaveEdit}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleSaveEdit}
+                          className="h-8 w-8 p-0"
+                        >
                           <Check className="h-4 w-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={handleCancelEdit}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleCancelEdit}
+                          className="h-8 w-8 p-0"
+                        >
                           <X className="h-4 w-4" />
                         </Button>
-                      </div>
+                      </>
                     ) : (
                       <>
-                        <div className="flex-1">
-                          <p className="font-medium">{category}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Used in {getCategoryUsageCount(category)} prompt(s)
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleStartEdit(category)}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleDeleteClick(category)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <span className="flex-1 text-sm">{category}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {getCategoryUsageCount(category)} prompt{getCategoryUsageCount(category) !== 1 ? 's' : ''}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleStartEdit(category)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteClick(category)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </>
                     )}
                   </div>
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
           </ScrollArea>
         </DialogContent>
       </Dialog>
@@ -149,7 +156,7 @@ export function ManageCategoriesDialog({ open, onOpenChange }: ManageCategoriesD
         title="Delete Category"
         description={
           deleteConfirm
-            ? `Are you sure you want to delete "${deleteConfirm.category}"? This will remove it from ${deleteConfirm.count} prompt(s).`
+            ? `Are you sure you want to delete "${deleteConfirm.category}"? This will remove it from ${deleteConfirm.count} prompt${deleteConfirm.count !== 1 ? 's' : ''}.`
             : ''
         }
         onConfirm={handleConfirmDelete}

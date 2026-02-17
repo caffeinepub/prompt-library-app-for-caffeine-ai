@@ -3,6 +3,7 @@ import { Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePromptStore } from '../../features/prompts/promptStore';
 import { useCategoryStore } from '../../features/categories/categoryStore';
+import { usePromptLibrarySync } from '../../features/backend/usePromptLibrarySync';
 import { exportPrompts } from '../../features/importExport/exporter';
 import { importPrompts } from '../../features/importExport/importer';
 import { toast } from 'sonner';
@@ -10,9 +11,8 @@ import { toast } from 'sonner';
 export function ImportExportControls() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const prompts = usePromptStore((state) => state.prompts);
-  const setPrompts = usePromptStore((state) => state.setPrompts);
   const categories = useCategoryStore((state) => state.categories);
-  const addCategory = useCategoryStore((state) => state.addCategory);
+  const { savePrompt, saveCategory, refreshFromBackend } = usePromptLibrarySync();
   const [importing, setImporting] = useState(false);
 
   const handleExport = () => {
@@ -35,8 +35,17 @@ export function ImportExportControls() {
       if (result.error) {
         toast.error(result.error);
       } else {
-        setPrompts([...prompts, ...result.prompts]);
-        result.categories.forEach((cat) => addCategory(cat));
+        // Save imported prompts and categories to backend
+        for (const prompt of result.prompts) {
+          await savePrompt(prompt);
+        }
+        for (const category of result.categories) {
+          await saveCategory(category);
+        }
+        
+        // Refresh from backend to get updated state
+        await refreshFromBackend();
+        
         toast.success(`Imported ${result.prompts.length} prompt(s)`);
       }
     } catch (error) {

@@ -1,49 +1,70 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T18:54:00.991Z",
-  "summary": "The diff updates `frontend/index.html` to use static favicon `<link>` tags and deprecates `frontend/src/lib/favicon.ts` by turning `setFavicon()` into a no-op. However, no favicon image assets were added in the diff, and there are additional changes (project metadata and file summary) not requested in the BuildRequest.",
+  "generatedAt": "2026-02-17T20:06:06.656Z",
+  "summary": "Backend now has per-principal prompt/category storage with CRUD-style methods and the frontend adds a backend-sync layer plus improved rich-text sanitization/paste handling. However, favicon generation/linking is not shown, and favorite/metadata persistence to backend appears incomplete (favorites/dates not stored and favorites explicitly derived locally). Some unrelated URL/session parameter utilities and admin-token plumbing were added without being requested.",
   "missing_requirements": [
     {
-      "id": "REQ-1",
-      "requirement": "Add the uploaded image file `prompt-library-favicon.png` (or a derived favicon file) to frontend publicly served static assets so it can be referenced by URL at runtime.",
-      "reason": "The diff shows no added files, yet `index.html` references `/assets/generated/favicon.dim_32x32.png` and `/assets/generated/favicon.dim_16x16.png`; there is no evidence these assets were added to a public/static directory.",
+      "id": "REQ-2",
+      "requirement": "Creating a prompt, editing a prompt, deleting, duplicating, and toggling favorite update the backend and then reflect in the UI.",
+      "reason": "The diff shows backend prompt type and API mappings that do not include isFavorite or date metadata; frontend mapping explicitly sets isFavorite=false and derives it from local state, which means toggling favorite is not persisted to the backend. Duplicate behavior persistence is not evidenced in the shown backend-sync wrapper (file is truncated).",
       "evidence": [
-        "File diff summary: \"Added: 0\"",
-        "frontend/index.html (references /assets/generated/favicon.dim_32x32.png and /assets/generated/favicon.dim_16x16.png)"
+        "frontend/src/features/backend/promptLibraryApi.ts",
+        "frontend/src/features/backend/usePromptLibrarySync.ts (truncated)",
+        "backend/main.mo (truncated)"
       ]
     },
     {
-      "id": "REQ-2",
-      "requirement": "Replace the app’s current favicon implementation so the browser tab uses the uploaded icon as the site favicon, and ensure it is applied on initial page load.",
-      "reason": "While the favicon mechanism is changed to rely on static link tags, there is no evidence the new favicon images exist or are derived from `prompt-library-favicon.png`, so the tab cannot reliably use the uploaded icon on initial load.",
+      "id": "REQ-1",
+      "requirement": "Prompts (including related metadata) are stored per authenticated user and round-trip reliably from backend without losing required state.",
+      "reason": "Backend Prompt type lacks fields for common UI metadata (e.g., isFavorite, dateAdded, dateModified). Frontend mapping fabricates dates with Date.now() and sets isFavorite to false, so this metadata cannot round-trip reliably from backend.",
       "evidence": [
-        "frontend/index.html (points to /assets/generated/favicon.dim_32x32.png and /assets/generated/favicon.dim_16x16.png)",
-        "File diff summary: \"Added: 0\""
+        "backend/main.mo (truncated)",
+        "frontend/src/features/backend/promptLibraryApi.ts"
       ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Set the uploaded image as the app’s browser-tab favicon by generating 16x16 and 32x32 PNG assets and referencing them from frontend/index.html under /assets/generated/.",
+      "reason": "No diff evidence shows generated favicon PNG files or any update to frontend/index.html to reference /assets/generated/favicon.dim_16x16.png and /assets/generated/favicon.dim_32x32.png.",
+      "evidence": []
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Modified `project_state.json` by adding new_feature_requests entries (AR-1..AR-4) and other project state metadata changes.",
-      "reason": "The BuildRequest does not ask to update project tracking/state files; it only requests frontend/static asset and favicon wiring changes.",
+      "description": "URL parameter + sessionStorage utilities (including mention of persisting an admin token) added.",
+      "reason": "Not requested by any REQ; BuildRequest is about backend prompt persistence, rich-text paste preservation, and favicon generation/linking.",
       "evidence": [
-        "project_state.json"
+        "frontend/src/utils/urlParams.ts"
       ]
     },
     {
-      "description": "Modified `frontend-file-summaries.txt`.",
-      "reason": "The BuildRequest does not request updating documentation/summaries; it only targets favicon assets and wiring.",
+      "description": "Frontend actor initialization now pulls an admin secret from URL params and calls _initializeAccessControlWithSecret.",
+      "reason": "Not requested by any REQ; authentication scope specified only Internet Identity principal-based per-user storage.",
       "evidence": [
-        "frontend-file-summaries.txt"
+        "frontend/src/hooks/useActor.ts"
       ]
     }
   ],
-  "confidence": 0.74,
+  "confidence": 0.7,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/index.html",
-    "frontend/src/lib/favicon.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/components/categories/ManageCategoriesDialog.tsx",
+    "frontend/src/components/importExport/ImportExportControls.tsx",
+    "frontend/src/components/prompts/PromptEditorDialog.tsx",
+    "frontend/src/features/backend/promptLibraryApi.ts",
+    "frontend/src/features/backend/usePromptLibrarySync.ts",
+    "frontend/src/features/categories/categoryStore.ts",
+    "frontend/src/features/prompts/promptStore.ts",
+    "frontend/src/features/richText/SimpleRichTextEditor.tsx",
+    "frontend/src/features/richText/sanitizeHtml.ts",
+    "frontend/src/features/storage/localStorage.ts",
+    "frontend/src/features/storage/useAutoPersist.ts",
+    "frontend/src/hooks/useActor.ts",
+    "frontend/src/utils/urlParams.ts",
     "project_state.json"
   ]
 }

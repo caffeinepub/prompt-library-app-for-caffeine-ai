@@ -1,6 +1,7 @@
 /**
  * Sanitizes HTML content to allow only safe formatting tags and attributes
  * produced by the rich text editor (bold, italic, and color spans).
+ * Enhanced to better preserve Word paste formatting including colors.
  */
 export function sanitizeHtml(html: string): string {
   // Create a temporary DOM element to parse the HTML
@@ -20,23 +21,53 @@ export function sanitizeHtml(html: string): string {
       const tagName = element.tagName.toLowerCase();
 
       // Allowed tags
-      const allowedTags = ['b', 'strong', 'i', 'em', 'span', 'br'];
+      const allowedTags = ['b', 'strong', 'i', 'em', 'span', 'br', 'p', 'div'];
       
       if (!allowedTags.includes(tagName)) {
-        // For disallowed tags, just return their text content
-        const textNode = document.createTextNode(element.textContent || '');
-        return textNode;
+        // For disallowed tags, preserve their children but not the tag itself
+        const fragment = document.createDocumentFragment();
+        Array.from(element.childNodes).forEach((child) => {
+          const cleanChild = cleanNode(child);
+          if (cleanChild) {
+            fragment.appendChild(cleanChild);
+          }
+        });
+        return fragment;
       }
 
       // Create a clean version of the element
       const cleanElement = document.createElement(tagName);
 
-      // For span elements, only allow color/style attributes
+      // For span elements, preserve color styling
       if (tagName === 'span') {
         const color = element.style.color;
         if (color) {
           cleanElement.style.color = color;
         }
+        // Also check for inline color attribute from Word
+        const styleAttr = element.getAttribute('style');
+        if (styleAttr && styleAttr.includes('color:')) {
+          const colorMatch = styleAttr.match(/color:\s*([^;]+)/);
+          if (colorMatch) {
+            cleanElement.style.color = colorMatch[1].trim();
+          }
+        }
+      }
+
+      // For p and div, convert to br for line breaks
+      if (tagName === 'p' || tagName === 'div') {
+        const fragment = document.createDocumentFragment();
+        Array.from(element.childNodes).forEach((child) => {
+          const cleanChild = cleanNode(child);
+          if (cleanChild) {
+            fragment.appendChild(cleanChild);
+          }
+        });
+        // Add line break after paragraph
+        if (element.nextSibling) {
+          fragment.appendChild(document.createElement('br'));
+        }
+        return fragment;
       }
 
       // Recursively clean and append child nodes

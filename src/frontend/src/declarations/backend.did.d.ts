@@ -10,7 +10,37 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface _SERVICE {}
+export interface Category {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+}
+export interface Prompt {
+  'id' : string,
+  'categories' : Array<string>,
+  'title' : string,
+  'content' : string,
+  'tags' : Array<string>,
+  'author' : string,
+}
+export type UserRole = { 'admin' : null } |
+  { 'user' : null } |
+  { 'guest' : null };
+export interface _SERVICE {
+  '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'deleteCategory' : ActorMethod<[string], undefined>,
+  'deletePrompt' : ActorMethod<[string], undefined>,
+  'getAllCategories' : ActorMethod<[], Array<Category>>,
+  'getAllPrompts' : ActorMethod<[], Array<Prompt>>,
+  'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getCategory' : ActorMethod<[string], [] | [Category]>,
+  'getPrompt' : ActorMethod<[string], [] | [Prompt]>,
+  'isCallerAdmin' : ActorMethod<[], boolean>,
+  'saveCategory' : ActorMethod<[Category], undefined>,
+  'savePrompt' : ActorMethod<[Prompt], undefined>,
+  'searchPrompts' : ActorMethod<[string], Array<Prompt>>,
+}
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
 export declare const idlFactory: IDL.InterfaceFactory;

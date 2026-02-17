@@ -1,59 +1,114 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Use uploaded app icon as browser tab favicon",
+  "title": "Prompt Library: frontend backend-sync for rich-text colors, improved Word paste, and favicon assets",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Add the uploaded favicon image (and resized variants) to publicly served frontend static assets.",
-      "acceptanceCriteria": [
-        "`prompt-library-favicon.png` (or a derived favicon file created from it) is present in the frontend’s publicly served static assets so it can be loaded by the browser without backend involvement."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/public/assets/generated/prompt-library-favicon.png",
-          "operation": "create",
-          "description": "Add the uploaded `prompt-library-favicon.png` into the publicly served static assets (copy from the provided asset into the frontend public assets directory)."
-        },
-        {
-          "path": "frontend/public/assets/generated/favicon.dim_32x32.png",
-          "operation": "create",
-          "description": "Create a resized favicon asset derived from `prompt-library-favicon.png` at 32x32 pixels: `frontend/public/assets/generated/favicon.dim_32x32.png`."
-        },
-        {
-          "path": "frontend/public/assets/generated/favicon.dim_16x16.png",
-          "operation": "create",
-          "description": "Optionally create a resized favicon asset derived from `prompt-library-favicon.png` at 16x16 pixels for broader browser support: `frontend/public/assets/generated/favicon.dim_16x16.png`."
-        }
-      ]
-    },
-    {
       "id": "REQ-2",
-      "summary": "Remove the embedded base64 favicon mechanism so it no longer determines the browser tab icon.",
+      "summary": "Load prompts/categories from backend after login and persist all prompt/category changes (including rich-text colors) to backend, replacing localStorage as source of truth.",
       "acceptanceCriteria": [
-        "When loading the app in a browser, the tab displays the new favicon based on `prompt-library-favicon.png`.",
-        "Any existing favicon mechanism (including the embedded base64 favicon in `frontend/src/lib/favicon.ts`) no longer determines the tab icon."
+        "After login, the app fetches prompts/categories from the backend and populates the existing Zustand stores used by the UI.",
+        "Creating a prompt, editing a prompt (including color changes), deleting, duplicating, and toggling favorite update the backend and then reflect in the UI.",
+        "Search results and prompt previews render the stored prompt content via the existing PromptContent component (sanitized HTML) and preserve text colors (do not revert to black).",
+        "localStorage auto-persist is no longer the source of truth for prompts/categories once backend persistence is enabled (no overwriting backend-sourced rich text with stale local data)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/lib/favicon.ts",
+          "path": "frontend/src/features/backend/promptLibraryApi.ts",
+          "operation": "create",
+          "description": "Create a small API layer that uses the backend actor (from the core-infrastructure actor configuration) to fetch prompts/categories and perform prompt/category mutations (save/delete/search). Include mapping helpers between backend Prompt/Category types and the app’s Zustand Prompt/category representations, ensuring prompt.content remains an HTML string and is not re-sanitized in a way that strips allowed inline color styling. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
+          "operation": "create",
+          "description": "Add a React hook that, once the user is authenticated and the actor is available, loads prompts/categories from the backend into the existing Zustand stores and exposes async action wrappers for create/edit/delete/duplicate/favorite/category changes that write to backend first (or write then refresh) and update Zustand on success. Ensure logout clears in-memory prompt/category state. Use authorization guidance to keep app data hidden until logged in and handle unauthorized backend failures gracefully. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/features/storage/useAutoPersist.ts",
           "operation": "modify",
-          "description": "Remove the embedded base64 favicon data and update the utility so it does not set a base64 favicon (either deprecate the function or have it reference the new static favicon asset), ensuring this file no longer determines the tab icon."
+          "description": "Stop loading/saving prompts and categories from/to localStorage as the primary data source once backend persistence is enabled. Keep persisting only non-sensitive UI preferences (e.g., viewMode) to localStorage, and avoid overwriting backend-loaded Zustand state on mount."
+        },
+        {
+          "path": "frontend/src/features/storage/localStorage.ts",
+          "operation": "modify",
+          "description": "Adjust storage schema and helpers to persist only UI preferences needed across refresh (e.g., viewMode), removing prompts/categories from persisted storage to prevent stale rich-text HTML overwriting backend-sourced data."
+        },
+        {
+          "path": "frontend/src/features/prompts/promptStore.ts",
+          "operation": "modify",
+          "description": "Add minimal store support needed for backend-sync flow (e.g., a clear/reset action for logout, and/or a replace/upsert helper) without moving CRUD into the store if handled by the sync hook. Ensure store setters can accept backend-loaded prompt arrays without re-sanitizing content."
+        },
+        {
+          "path": "frontend/src/features/categories/categoryStore.ts",
+          "operation": "modify",
+          "description": "Add minimal store support needed for backend-sync flow (e.g., clear/reset action for logout, and/or replace/set helpers) so backend-loaded categories become the single source of truth in UI state."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire backend-sync into the authenticated app flow: after login, trigger loading prompts/categories from backend and populate Zustand stores; replace direct Zustand mutations (add/update/delete/duplicate/toggle favorite and category changes) with async wrappers that persist to backend and then update UI. Ensure in-memory prompt/category data is cleared on logout (in addition to query cache clearing) per authorization guidance. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/categories/ManageCategoriesDialog.tsx",
+          "operation": "modify",
+          "description": "Route category rename/delete actions through the backend-sync action wrappers so category edits and deletions are persisted to backend and reflected in prompt/category Zustand state after completion. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/importExport/ImportExportControls.tsx",
+          "operation": "modify",
+          "description": "After a successful import into Zustand, persist imported prompts/categories to backend using the backend-sync layer (batch via sequential saves/refresh), so imported rich-text HTML (including colors) round-trips through backend and remains visible in search/previews. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Set the favicon via a proper link tag in frontend/index.html without any UI/branding changes.",
+      "summary": "Preserve supported formatting (especially text colors) when pasting from Microsoft Word by capturing clipboard HTML and sanitizing into the app’s allowed HTML subset.",
       "acceptanceCriteria": [
-        "`frontend/index.html` includes a favicon link tag (or equivalent initialization occurs before the app renders) that points to the new favicon asset.",
-        "No visible UI components, headers, logos, or in-app icons are changed as part of this request."
+        "Pasting from Microsoft Word into the rich text editor keeps text color formatting when the clipboard provides HTML (do not force plaintext-only paste).",
+        "The pasted content is sanitized to the app’s safe subset while preserving text color styling where present (e.g., span color styles).",
+        "Saving the prompt after a Word paste and then searching/opening the prompt shows the same colors as pasted (within supported formatting)."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/features/richText/SimpleRichTextEditor.tsx",
+          "operation": "modify",
+          "description": "Update paste handling to prefer clipboard 'text/html' when available: sanitize the HTML into the allowed subset (preserving span color styles) and insert sanitized HTML into the editor; fall back to plaintext only when HTML is not available. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/features/richText/sanitizeHtml.ts",
+          "operation": "modify",
+          "description": "Extend/adjust sanitization rules to better support common Word HTML while remaining safe: preserve inline text color styling (e.g., span style color) and keep reasonable structure/line breaks for pasted content, without allowing unsafe tags/attributes. Ensure sanitizer does not normalize all text to black when a color style exists."
+        },
+        {
+          "path": "frontend/src/components/prompts/PromptEditorDialog.tsx",
+          "operation": "modify",
+          "description": "Confirm the editor save flow sanitizes pasted HTML once (at save) and does not accidentally strip color styling; ensure the editor’s value/state handling does not overwrite pasted HTML with plaintext. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Use the uploaded icon as the browser-tab favicon by adding generated 16x16 and 32x32 PNG assets and referencing them in the HTML.",
+      "acceptanceCriteria": [
+        "The favicon displayed in the browser tab matches the uploaded image.",
+        "frontend/index.html references the generated favicon files under /assets/generated/ for 16x16 and 32x32 PNG sizes.",
+        "No favicon changes are required beyond the main app tab/favicon behavior."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/public/assets/generated/favicon.dim_16x16.png",
+          "operation": "create",
+          "description": "Add the generated favicon asset at frontend/public/assets/generated/favicon.dim_16x16.png (from the provided generated asset list) so it is served as a static file."
+        },
+        {
+          "path": "frontend/public/assets/generated/favicon.dim_32x32.png",
+          "operation": "create",
+          "description": "Add the generated favicon asset at frontend/public/assets/generated/favicon.dim_32x32.png (from the provided generated asset list) so it is served as a static file."
+        },
+        {
           "path": "frontend/index.html",
           "operation": "modify",
-          "description": "Add/replace favicon `<link rel=\"icon\" ...>` tags in the HTML head to reference the new publicly served assets (use `frontend/public/assets/generated/favicon.dim_32x32.png` as the primary icon and `frontend/public/assets/generated/favicon.dim_16x16.png` as an additional size), ensuring it applies on initial page load and replaces any prior favicon behavior."
+          "description": "Ensure favicon link tags reference /assets/generated/favicon.dim_32x32.png and /assets/generated/favicon.dim_16x16.png and remove/avoid any conflicting favicon declarations so the uploaded image is the favicon."
         }
       ]
     }
