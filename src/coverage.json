@@ -1,48 +1,90 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T22:23:45.532Z",
+  "generatedAt": "2026-02-17T23:12:06.469Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Ensure prompt text color formatting set in the “Add Prompt” rich-text editor persists after clicking Save by preserving and/or normalizing color markup during HTML sanitization (including browser-generated <font color=\"...\"> and equivalent inline color styles) so the saved prompt content retains the selected colors.",
+        "summary": "Add robust actor-creation error handling and visibility so production failures to create the backend actor are surfaced (instead of leaving the app in a silent null-actor state). Specifically: expose actor creation status (loading/success/error) and the underlying error message/details to the UI layer, and ensure failures are logged with enough context to diagnose production-only issues.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/features/richText/sanitizeHtml.ts",
-          "frontend/src/components/prompts/PromptEditorDialog.tsx"
+          "frontend/src/features/backend/actorDiagnostics.ts",
+          "frontend/src/features/backend/useBackendActorStatus.ts",
+          "frontend/src/components/backend/BackendConnectionBanner.tsx",
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/features/richText/sanitizeHtml.ts"
+          "frontend/src/features/backend/actorDiagnostics.ts",
+          "frontend/src/features/backend/useBackendActorStatus.ts",
+          "frontend/src/components/backend/BackendConnectionBanner.tsx",
+          "frontend/src/App.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Display the persisted per-prompt text color formatting consistently wherever prompt content is rendered (including search-filtered results), ensuring no view path re-sanitizes in a way that strips colors.",
+        "summary": "Prevent saving prompts/categories while the backend connection is not ready. Disable or block the Save action in the \"+Add Prompt\" / prompt editor flow until the backend actor/API is initialized, and show a user-facing English status message (e.g., \"Connecting to backend…\" or a retry prompt) rather than allowing a save that immediately throws \"Not connected to backend\".",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/prompts/PromptContent.tsx",
-          "frontend/src/components/prompts/PromptGridView.tsx"
+          "frontend/src/components/prompts/PromptEditorDialog.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/features/backend/usePromptLibrarySync.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/prompts/PromptGridView.tsx"
+          "frontend/src/components/prompts/PromptEditorDialog.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/features/backend/usePromptLibrarySync.ts"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Implement a lightweight backend connectivity self-check on authenticated app startup (production and draft) to detect and report a canister/config mismatch early. The check should attempt a simple backend call after actor creation and show an actionable English error if it fails, including guidance to retry (e.g., reload) and capturing the failure details in console logs.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/features/backend/usePromptLibrarySync.ts",
+          "frontend/src/App.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/features/backend/usePromptLibrarySync.ts",
+          "frontend/src/App.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Fix production configuration so the frontend creates the actor against the correct backend canister ID in live. Ensure the actor factory used by the frontend (imported as createActorWithConfig) is correctly configured/built for production so it never resolves to an empty/incorrect canister ID or an unreachable host in the live deployment.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/config.ts",
+          "frontend/src/features/backend/actorDiagnostics.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/features/backend/actorDiagnostics.ts"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/prompts/PromptGridView.tsx",
-    "frontend/src/features/richText/sanitizeHtml.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/backend/BackendConnectionBanner.tsx",
+    "frontend/src/components/prompts/PromptEditorDialog.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/features/backend/actorDiagnostics.ts",
+    "frontend/src/features/backend/useBackendActorStatus.ts",
+    "frontend/src/features/backend/usePromptLibrarySync.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

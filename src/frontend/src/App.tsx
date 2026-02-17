@@ -17,6 +17,7 @@ import { PromptListView } from './components/prompts/PromptListView';
 import { PromptGridView } from './components/prompts/PromptGridView';
 import { PromptTableView } from './components/prompts/PromptTableView';
 import { SignInScreen } from './components/auth/SignInScreen';
+import { BackendConnectionBanner } from './components/backend/BackendConnectionBanner';
 import { usePromptStore } from './features/prompts/promptStore';
 import { useCategoryStore } from './features/categories/categoryStore';
 import { filterPrompts } from './features/prompts/filtering';
@@ -24,6 +25,7 @@ import { sortPrompts } from './features/prompts/sorting';
 import { useAutoPersist } from './features/storage/useAutoPersist';
 import { loadFromStorage } from './features/storage/localStorage';
 import { usePromptLibrarySync } from './features/backend/usePromptLibrarySync';
+import { useBackendActorStatus } from './features/backend/useBackendActorStatus';
 import { ViewMode, SortMode, Prompt } from './features/prompts/types';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
 import { useReliableIILogout } from './features/auth/useReliableIILogout';
@@ -51,11 +53,38 @@ function App() {
   const clearPrompts = usePromptStore((state) => state.clearPrompts);
   const clearCategories = useCategoryStore((state) => state.clearCategories);
 
-  // Backend sync
-  const { isReady, savePrompt, deletePrompt: deletePromptBackend, refreshFromBackend } = usePromptLibrarySync();
+  // Backend sync and connectivity status
+  const { 
+    isReady, 
+    isCheckingConnectivity,
+    connectivityError,
+    savePrompt, 
+    deletePrompt: deletePromptBackend, 
+    refreshFromBackend 
+  } = usePromptLibrarySync();
+
+  const { 
+    isLoading: actorLoading, 
+    isError: actorError, 
+    statusMessage: actorStatusMessage,
+    canSave: actorCanSave,
+  } = useBackendActorStatus();
 
   // Check if user is authenticated
   const isAuthenticated = identity && !identity.getPrincipal().isAnonymous();
+
+  // Determine overall backend readiness
+  const backendReady = isReady && actorCanSave;
+  const backendLoading = actorLoading || isCheckingConnectivity;
+  const backendError = actorError || !!connectivityError;
+  
+  // Combine status messages
+  let backendStatusMessage = actorStatusMessage;
+  if (connectivityError) {
+    backendStatusMessage = connectivityError.message;
+  } else if (isCheckingConnectivity) {
+    backendStatusMessage = 'Verifying backend connection...';
+  }
 
   // Check for logout completion on mount
   useEffect(() => {
@@ -125,6 +154,13 @@ function App() {
   };
 
   const handleSavePrompt = async (data: Omit<Prompt, 'id' | 'dateAdded' | 'dateModified'>) => {
+    // Guard against saving when backend is not ready
+    if (!backendReady) {
+      const error = new Error(backendStatusMessage || 'Backend connection not ready');
+      toast.error(error.message);
+      throw error;
+    }
+
     try {
       if (editingPrompt) {
         // Update existing prompt
@@ -256,7 +292,7 @@ function App() {
                 <Settings className="h-4 w-4 mr-2" />
                 Manage Categories
               </Button>
-              <Button onClick={handleAddPrompt} size="sm">
+              <Button onClick={handleAddPrompt} size="sm" disabled={!backendReady}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Prompt
               </Button>
@@ -288,6 +324,13 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-1 container mx-auto px-4 py-6">
+        {/* Backend Connection Status Banner */}
+        <BackendConnectionBanner
+          isLoading={backendLoading}
+          isError={backendError}
+          errorMessage={backendStatusMessage}
+        />
+
         {isDefaultEmptyState ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg mb-2">
@@ -371,6 +414,8 @@ function App() {
         onOpenChange={setEditorOpen}
         prompt={editingPrompt}
         onSave={handleSavePrompt}
+        canSave={backendReady}
+        statusMessage={!backendReady ? backendStatusMessage : undefined}
       />
 
       <ManageCategoriesDialog

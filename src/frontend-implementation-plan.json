@@ -1,46 +1,104 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Prompt Library — Preserve & Render Rich Text Color Formatting",
+  "title": "Fix production backend connection/actor creation failures and prevent save race conditions",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Preserve per-prompt text color markup when sanitizing and saving rich-text content so saved prompts retain their selected colors.",
+      "summary": "Surface actor creation status/errors to the UI and add structured diagnostic logging for production-only actor creation failures.",
       "acceptanceCriteria": [
-        "In the “Add Prompt” dialog, applying a non-black text color and clicking Save results in the saved prompt content retaining that color when the prompt is re-opened for editing.",
-        "After saving, the prompt content retains the selected text colors when rendered in List view and in the Preview dialog.",
-        "Color formatting is preserved across a page refresh and after data is reloaded from the backend (i.e., the HTML stored for the prompt still contains the necessary color markup)."
+        "If backend actor creation fails in production, the user sees a clear error state (not just \"Not connected to backend\"), and the browser console includes a structured log with the error message/stack and relevant context (e.g., whether authenticated, current principal).",
+        "If actor creation succeeds, the UI proceeds normally with no additional friction.",
+        "No changes are made to files under frontend/src/components/ui or the immutable hook files listed in SYSTEM_CONTEXT."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/richText/sanitizeHtml.ts",
-          "operation": "modify",
-          "description": "Update HTML sanitization to preserve/normalize text color markup on save: explicitly support browser-generated <font color=\"...\"> by converting it to an allowed element (e.g., span) while retaining its color, and preserve equivalent inline color styles (style=\"color: ...\") on allowed formatting tags without allowing unsafe styles. Ensure normalization results in stable color markup being kept in the sanitized HTML string."
+          "path": "frontend/src/features/backend/actorDiagnostics.ts",
+          "operation": "create",
+          "description": "Add a small diagnostics utility to produce structured console logs for actor creation/connectivity failures (include: phase, environment hints, isAuthenticated, principal string when available, and normalized error message/stack)."
         },
         {
-          "path": "frontend/src/components/prompts/PromptEditorDialog.tsx",
+          "path": "frontend/src/features/backend/useBackendActorStatus.ts",
+          "operation": "create",
+          "description": "Create a wrapper hook that composes around the immutable useActor/useInternetIdentity to expose actor creation status (loading/success/error) and error details by reading the React Query cache state for the actor query key; call actorDiagnostics for structured logging when errors are detected."
+        },
+        {
+          "path": "frontend/src/components/backend/BackendConnectionBanner.tsx",
+          "operation": "create",
+          "description": "Add a lightweight banner/panel component to display backend connection/actor initialization state and an actionable English error message when actor creation fails (retry guidance via reload). This component should not use or modify anything under frontend/src/components/ui. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Ensure the Save flow continues to sanitize using the updated sanitizer and that the stored/sent prompt content uses the normalized, color-preserving HTML output (no additional transformations that would drop color)."
+          "description": "Wire useBackendActorStatus into the authenticated app UI and render BackendConnectionBanner when actor creation is loading or error; ensure the banner uses English messaging and that failures are visible rather than leaving the app in a silent null-actor state."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Render persisted per-prompt text colors consistently across all prompt rendering paths (including search-filtered results) without stripping colors during sanitization.",
+      "summary": "Block/disable Save in the Add/Edit Prompt flow until backend connectivity is ready and show a clear connecting/retry message instead of allowing a save that throws.",
       "acceptanceCriteria": [
-        "When a prompt is found via the search input, its displayed content retains the saved text colors (no regression to all-black text).",
-        "No rendering path (e.g., list/grid/table/preview) strips saved text colors while still sanitizing unsafe HTML."
+        "When the backend connection is not ready, the Save button/action is disabled (or otherwise prevented) and the user is informed that the app is connecting.",
+        "Once the backend connection becomes ready, Save is enabled and successfully persists without showing \"Not connected to the backend\".",
+        "No toast with the exact text \"Not connected to backend\" appears during normal startup/race conditions; it should only appear if a genuine connection failure persists after retries."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/prompts/PromptContent.tsx",
+          "path": "frontend/src/components/prompts/PromptEditorDialog.tsx",
           "operation": "modify",
-          "description": "Confirm all rendered HTML prompt content uses the updated sanitizeHtml behavior so color markup remains intact while unsafe HTML is still removed (single consistent rendering sanitizer)."
+          "description": "Add props to control save availability (e.g., canSave + disabledReason/statusText) and update the dialog UI to disable the Save button and show an English status message like \"Connecting to backend…\" (and retry guidance) when backend connectivity is not ready; also prevent handleSave from calling onSave while blocked. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/prompts/PromptGridView.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Update the grid view preview to render prompt content via the shared PromptContent (sanitized HTML rendering) rather than converting to plain text, so persisted text colors are visible in grid cards as well as in search-filtered results when grid view is active."
+          "description": "Pass backend readiness/status message into PromptEditorDialog so Save is blocked during startup/actor initialization/connectivity checks; also add a defensive guard in handleSavePrompt to avoid invoking save while not ready (with an English message surfaced in the dialog/banner rather than a \"Not connected\" toast)."
+        },
+        {
+          "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
+          "operation": "modify",
+          "description": "Replace the current immediate toast+throw behavior when apiRef is null with a readiness/status export that callers can use to disable Save; ensure normal startup race conditions do not trigger a toast with the exact text \"Not connected to backend\"."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add an authenticated startup backend connectivity self-check using an existing backend call and gate editing/saving on success with actionable UI errors and console logs.",
+      "acceptanceCriteria": [
+        "After login, the app performs a backend call (using the same actor used by save) and confirms connectivity before enabling editing/saving.",
+        "If the call fails, the UI shows an error that indicates backend connectivity is failing (not an authorization message unless that is the actual error), and console logs include the error details.",
+        "This change does not alter backend authorization rules; it only adds/uses existing backend calls for verification."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
+          "operation": "modify",
+          "description": "After actor creation and authentication, perform a lightweight connectivity self-check using the existing backendConnectivityCheck() call; track status (checking/success/error) and error details, log failures via actorDiagnostics with relevant context, and ensure isReady only becomes true after the check succeeds (so editing/saving is gated)."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Use the sync hook’s connectivity-check status to (a) keep Save disabled until verified and (b) show an actionable English error state when the check fails (e.g., \"Backend connection failed. Please reload to retry.\") without presenting it as an authorization issue unless that is the true error."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Fix/validate production actor factory configuration so the frontend always creates an actor with the correct canister ID/host and fails fast with a clear misconfiguration error.",
+      "acceptanceCriteria": [
+        "In production, the actor is created successfully and saving a newly added prompt works end-to-end.",
+        "If configuration is missing/invalid at runtime, the app fails fast with a clear English error indicating misconfiguration rather than silently leaving the actor null.",
+        "No changes require third-party services; the solution remains within the IC + generated declarations/config approach used by the project."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/config.ts",
+          "operation": "create",
+          "description": "Implement (or replace missing) createActorWithConfig used by the immutable useActor hook: ensure it sources the correct production canister ID/host from the project’s generated declarations/config approach, validates the canister ID at runtime (non-empty, expected format), and throws a clear English misconfiguration error when invalid rather than returning a null/partially-initialized actor."
+        },
+        {
+          "path": "frontend/src/features/backend/actorDiagnostics.ts",
+          "operation": "modify",
+          "description": "Add a dedicated log shape/message for configuration/misconfiguration failures (e.g., missing canister ID, invalid host) so production issues are diagnosable from browser console output."
         }
       ]
     }

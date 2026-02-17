@@ -1,104 +1,95 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { CategoryPicker } from '../categories/CategoryPicker';
 import { SimpleRichTextEditor } from '../../features/richText/SimpleRichTextEditor';
-import { sanitizeHtml } from '../../features/richText/sanitizeHtml';
-import { createInputPasteHandler } from '../../features/paste/cleanPasteHandlers';
 import { Prompt } from '../../features/prompts/types';
+import { createInputPasteHandler } from '../../features/paste/cleanPasteHandlers';
+import { Loader2 } from 'lucide-react';
 
 interface PromptEditorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   prompt?: Prompt;
   onSave: (data: Omit<Prompt, 'id' | 'dateAdded' | 'dateModified'>) => Promise<void>;
+  canSave?: boolean;
+  statusMessage?: string;
 }
 
-export function PromptEditorDialog({
-  open,
-  onOpenChange,
-  prompt,
+export function PromptEditorDialog({ 
+  open, 
+  onOpenChange, 
+  prompt, 
   onSave,
+  canSave = true,
+  statusMessage,
 }: PromptEditorDialogProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [categories, setCategories] = useState<string[]>([]);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (prompt) {
-      setTitle(prompt.title);
-      setContent(prompt.content);
-      setCategories(prompt.categories);
-      setIsFavorite(prompt.isFavorite);
-    } else {
-      setTitle('');
-      setContent('');
-      setCategories([]);
-      setIsFavorite(false);
+    if (open) {
+      setTitle(prompt?.title || '');
+      setContent(prompt?.content || '');
+      setCategories(prompt?.categories || []);
     }
-  }, [prompt, open]);
+  }, [open, prompt]);
 
   const handleSave = async () => {
-    const trimmedTitle = title.trim();
-    const sanitizedContent = sanitizeHtml(content);
-    
-    if (!trimmedTitle || !sanitizedContent.trim()) return;
+    if (!canSave) {
+      return;
+    }
 
     setIsSaving(true);
     try {
       await onSave({
-        title: trimmedTitle,
-        content: sanitizedContent,
+        title: title.trim(),
+        content,
         categories,
-        isFavorite,
+        isFavorite: prompt?.isFavorite || false,
       });
-      // Only close on successful save
       onOpenChange(false);
     } catch (error) {
-      // Error already shown by parent, keep dialog open
-      console.error('Save failed:', error);
+      // Error already handled by parent, keep dialog open
     } finally {
       setIsSaving(false);
     }
   };
 
+  const isFormValid = title.trim() && content.trim();
+  const saveDisabled = !isFormValid || isSaving || !canSave;
+
   // Create paste handler for title input
   const handleTitlePaste = createInputPasteHandler(setTitle, () => title);
-
-  const isContentEmpty = !content.trim() || content === '<br>';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{prompt ? 'Edit Prompt' : 'Add New Prompt'}</DialogTitle>
-          <DialogDescription>
-            {prompt ? 'Update your prompt details below.' : 'Create a new prompt for your library.'}
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {statusMessage && (
+            <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md flex items-center gap-2">
+              {!canSave && <Loader2 className="h-4 w-4 animate-spin" />}
+              {statusMessage}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input
               id="title"
-              placeholder="Enter prompt title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onPaste={handleTitlePaste}
-              disabled={isSaving}
+              placeholder="Enter prompt title"
+              disabled={isSaving || !canSave}
             />
           </div>
 
@@ -107,7 +98,7 @@ export function PromptEditorDialog({
             <SimpleRichTextEditor
               value={content}
               onChange={setContent}
-              placeholder="Enter your prompt content here. Use the toolbar to format text with bold, italic, and colors."
+              placeholder="Enter your prompt content here..."
             />
           </div>
 
@@ -118,24 +109,28 @@ export function PromptEditorDialog({
               onCategoriesChange={setCategories}
             />
           </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="favorite"
-              checked={isFavorite}
-              onCheckedChange={setIsFavorite}
-              disabled={isSaving}
-            />
-            <Label htmlFor="favorite">Mark as favorite</Label>
-          </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isSaving}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={!title.trim() || isContentEmpty || isSaving}>
-            {isSaving ? 'Saving...' : 'Save'}
+          <Button 
+            onClick={handleSave} 
+            disabled={saveDisabled}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

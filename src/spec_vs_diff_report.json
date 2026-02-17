@@ -1,42 +1,71 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T22:23:45.529Z",
-  "summary": "The diff adds color-preserving/normalizing logic to the frontend HTML sanitizer (including converting <font color=\"...\"> to <span style=\"color:...\">) and updates PromptGridView to render prompt HTML via PromptContent. However, the diff summary does not show changes in the save/edit pipeline or other render paths (list/preview/search), so full persistence and consistent rendering across all views can’t be confirmed from the provided evidence.",
+  "generatedAt": "2026-02-17T23:12:06.466Z",
+  "summary": "Diff adds frontend-visible backend connection status (banner + status hook), a backend connectivity-check endpoint, and a startup connectivity check in the sync hook. It also updates the prompt editor to block saving when canSave is false. However, there is no clear evidence of a production canister/actor configuration fix (REQ-4), and actor-creation error reporting appears to use a synthetic error rather than surfacing the underlying actor creation failure details.",
   "missing_requirements": [
     {
-      "id": "REQ-1",
-      "requirement": "Ensure prompt text color formatting set in the “Add Prompt” rich-text editor persists after clicking Save by preserving and/or normalizing color markup during HTML sanitization (including browser-generated <font color=\"...\"> and equivalent inline color styles) so the saved prompt content retains the selected colors.",
-      "reason": "Although sanitizeHtml.ts was updated to preserve/normalize color markup, the diff summary does not show that the \"Add Prompt\" save flow uses this sanitizer when storing prompt HTML (or that the editor re-hydrates from the stored HTML). Without evidence of changes in PromptEditorDialog (or the save/serialization path), persistence after Save and after backend reload cannot be verified.",
+      "id": "REQ-4",
+      "requirement": "Fix production configuration so the frontend creates the actor against the correct backend canister ID in live; fail fast with a clear English misconfiguration error if runtime config is missing/invalid.",
+      "reason": "The diff summary shows new diagnostics/hooks and a connectivity check, but no changes are shown to the actor factory/configuration path (e.g., createActorWithConfig, env/canister ID resolution, production build-time/runtime config validation).",
       "evidence": [
-        "frontend/src/features/richText/sanitizeHtml.ts (truncated)",
-        "frontend-file-summaries.txt (no shown diff for PromptEditorDialog.tsx/save path)"
+        "<file-diff>: no modified files indicating changes to actor factory/config used by frontend (only new hooks/components and App wiring shown)"
+      ]
+    },
+    {
+      "id": "REQ-1",
+      "requirement": "Expose actor creation status (loading/success/error) and the underlying error message/details to the UI layer, and ensure failures are logged with enough context (error message/stack, auth state, principal).",
+      "reason": "A status hook is added, but it creates a new generic Error(\"Backend actor creation failed...\") rather than surfacing the underlying actor-creation error details. The UI banner supports an errorMessage prop, but the hook only stores the synthetic error and the diff excerpt does not show wiring of the underlying error/stack from actor creation into UI state.",
+      "evidence": [
+        "frontend/src/features/backend/useBackendActorStatus.ts (creates synthetic Error; no capture of underlying actor creation error)",
+        "frontend/src/components/backend/BackendConnectionBanner.tsx (expects errorMessage but does not itself derive underlying actor creation error)",
+        "frontend/src/App.tsx (truncated; does not show passing detailed actor error message into banner)"
       ]
     },
     {
       "id": "REQ-2",
-      "requirement": "Display the persisted per-prompt text color formatting consistently wherever prompt content is rendered (including search-filtered results), ensuring no view path re-sanitizes in a way that strips colors.",
-      "reason": "Only PromptGridView is shown being updated to render via PromptContent. The diff summary provides no evidence for other rendering paths (list/table view, preview dialog, and search-filtered rendering) to ensure they all use the same color-preserving sanitization and do not re-sanitize in a color-stripping way.",
+      "requirement": "Prevent saving prompts/categories while backend connection is not ready; disable/block Save until backend actor/API is initialized; avoid normal-startup toasts saying exactly \"Not connected to backend\".",
+      "reason": "Prompt editor save is guarded via canSave/statusMessage, but the requirement also includes categories. The diff excerpt does not show similar blocking/disabled behavior for category save flows (e.g., ManageCategoriesDialog operations). Also, usePromptLibrarySync still imports toast and may still surface connection errors as toasts; the excerpt is truncated before CRUD wrappers where the exact toast text behavior would be determined.",
       "evidence": [
-        "frontend/src/components/prompts/PromptGridView.tsx",
-        "frontend-file-summaries.txt (PromptContent mentioned, but no diff shown for list/preview/search components)"
+        "frontend/src/components/prompts/PromptEditorDialog.tsx (canSave/statusMessage disables Save)",
+        "frontend/src/components/categories/ManageCategoriesDialog.tsx (mentioned in summaries, but diff content not shown for save-blocking)",
+        "frontend/src/features/backend/usePromptLibrarySync.ts (imports toast; truncated before operation wrappers where \"Not connected to backend\" could be emitted)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Sanitizer behavior change converting <p>/<div> into line-break fragments (adding <br> after paragraphs/divs).",
-      "reason": "The BuildRequest focuses on preserving text color formatting; paragraph/div-to-<br> normalization is an additional formatting transformation not explicitly requested.",
+      "description": "Paste-cleaning behavior added/extended across various inputs (search, category picker, manage categories rename, etc.).",
+      "reason": "Not requested by any REQ; BuildRequest is focused on backend connectivity/actor creation and preventing saves during initialization.",
       "evidence": [
-        "frontend/src/features/richText/sanitizeHtml.ts (truncated)"
+        "frontend-file-summaries.txt (SearchInput/CategoryPicker/ManageCategoriesDialog mention paste-cleaning changes)"
+      ]
+    },
+    {
+      "description": "Local storage persistence scope changed to store only UI preferences (viewMode) and no longer store prompts/categories.",
+      "reason": "Not requested; connectivity fix request did not ask to change storage behavior beyond preventing failed saves during connection races.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/features/storage/localStorage.ts, frontend/src/features/storage/useAutoPersist.ts descriptions)"
+      ]
+    },
+    {
+      "description": "Import/export related additions/changes and prompt type adjustments (e.g., removing tags field) unrelated to connectivity.",
+      "reason": "Non-goal explicitly says not to add unrelated prompt-library features/changes; these appear orthogonal to connectivity/actor initialization.",
+      "evidence": [
+        "frontend-file-summaries.txt (importExport/* descriptions; PromptEditorDialog summary mentions removing unused tags field)"
       ]
     }
   ],
   "confidence": 0.62,
   "changed_files": [
+    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/prompts/PromptGridView.tsx",
-    "frontend/src/features/richText/sanitizeHtml.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/components/backend/BackendConnectionBanner.tsx",
+    "frontend/src/components/prompts/PromptEditorDialog.tsx",
+    "frontend/src/features/backend/actorDiagnostics.ts",
+    "frontend/src/features/backend/useBackendActorStatus.ts",
+    "frontend/src/features/backend/usePromptLibrarySync.ts",
     "project_state.json"
   ]
 }

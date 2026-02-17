@@ -30,6 +30,7 @@ export enum UserRole {
 }
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    backendConnectivityCheck(): Promise<void>;
     deleteCategory(categoryId: string): Promise<void>;
     deletePrompt(promptId: string): Promise<void>;
     getAllCategories(): Promise<Array<Category>>;

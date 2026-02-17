@@ -31,6 +31,7 @@ export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'backendConnectivityCheck' : IDL.Func([], [], ['query']),
   'deleteCategory' : IDL.Func([IDL.Text], [], []),
   'deletePrompt' : IDL.Func([IDL.Text], [], []),
   'getAllCategories' : IDL.Func([], [IDL.Vec(Category)], ['query']),
@@ -77,6 +78,7 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'backendConnectivityCheck' : IDL.Func([], [], ['query']),
     'deleteCategory' : IDL.Func([IDL.Text], [], []),
     'deletePrompt' : IDL.Func([IDL.Text], [], []),
     'getAllCategories' : IDL.Func([], [IDL.Vec(Category)], ['query']),

@@ -2,10 +2,13 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-ensure-prompt-text-color-formatting-set-in-the-add-prompt-rich-text-editor-persists-after-clicking-save-by-preserving-and-or-normalizing-color-markup-during-html-sanitization-including-browser-generated-font-color-and-equivalent-inline-color-styles-so-the-saved-prompt-content-retains-the-selected-colors",
-      "featureTitle": "Ensure prompt text color formatting set in the “Add Prompt” rich-text editor persists after clicking Save by preserving and/or normalizing color markup during HTML sanitization (including browser-generated <font color=\"...\"> and equivalent inline color styles) so the saved prompt content retains the selected colors.",
+      "featureId": "feature-add-robust-actor-creation-error-handling-and-visibility-so-production-failures-to-create-the-backend-actor-are-surfaced-instead-of-leaving-the-app-in-a-silent-null-actor-state-specifically-expose-actor-creation-status-loading-success-error-and-the-underlying-error-message-details-to-the-ui-layer-and-ensure-failures-are-logged-with-enough-context-to-diagnose-production-only-issues",
+      "featureTitle": "Add robust actor-creation error handling and visibility so production failures to create the backend actor are surfaced (instead of leaving the app in a silent null-actor state). Specifically: expose actor creation status (loading/success/error) and the underlying error message/details to the UI layer, and ensure failures are logged with enough context to diagnose production-only issues.",
       "files": [
-        "frontend/src/features/richText/sanitizeHtml.ts"
+        "frontend/src/App.tsx",
+        "frontend/src/components/backend/BackendConnectionBanner.tsx",
+        "frontend/src/features/backend/actorDiagnostics.ts",
+        "frontend/src/features/backend/useBackendActorStatus.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -21,10 +24,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-display-the-persisted-per-prompt-text-color-formatting-consistently-wherever-prompt-content-is-rendered-including-search-filtered-results-ensuring-no-view-path-re-sanitizes-in-a-way-that-strips-colors",
-      "featureTitle": "Display the persisted per-prompt text color formatting consistently wherever prompt content is rendered (including search-filtered results), ensuring no view path re-sanitizes in a way that strips colors.",
+      "featureId": "feature-prevent-saving-prompts-categories-while-the-backend-connection-is-not-ready-disable-or-block-the-save-action-in-the-add-prompt-prompt-editor-flow-until-the-backend-actor-api-is-initialized-and-show-a-user-facing-english-status-message-e-g-connecting-to-backend-or-a-retry-prompt-rather-than-allowing-a-save-that-immediately-throws-not-connected-to-backend",
+      "featureTitle": "Prevent saving prompts/categories while the backend connection is not ready. Disable or block the Save action in the \"+Add Prompt\" / prompt editor flow until the backend actor/API is initialized, and show a user-facing English status message (e.g., \"Connecting to backend…\" or a retry prompt) rather than allowing a save that immediately throws \"Not connected to backend\".",
       "files": [
-        "frontend/src/components/prompts/PromptGridView.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/components/prompts/PromptEditorDialog.tsx",
+        "frontend/src/features/backend/usePromptLibrarySync.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -36,6 +41,45 @@
       ],
       "testIds": [
         "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-a-lightweight-backend-connectivity-self-check-on-authenticated-app-startup-production-and-draft-to-detect-and-report-a-canister-config-mismatch-early-the-check-should-attempt-a-simple-backend-call-after-actor-creation-and-show-an-actionable-english-error-if-it-fails-including-guidance-to-retry-e-g-reload-and-capturing-the-failure-details-in-console-logs",
+      "featureTitle": "Implement a lightweight backend connectivity self-check on authenticated app startup (production and draft) to detect and report a canister/config mismatch early. The check should attempt a simple backend call after actor creation and show an actionable English error if it fails, including guidance to retry (e.g., reload) and capturing the failure details in console logs.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/features/backend/usePromptLibrarySync.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-fix-production-configuration-so-the-frontend-creates-the-actor-against-the-correct-backend-canister-id-in-live-ensure-the-actor-factory-used-by-the-frontend-imported-as-createactorwithconfig-is-correctly-configured-built-for-production-so-it-never-resolves-to-an-empty-incorrect-canister-id-or-an-unreachable-host-in-the-live-deployment",
+      "featureTitle": "Fix production configuration so the frontend creates the actor against the correct backend canister ID in live. Ensure the actor factory used by the frontend (imported as createActorWithConfig) is correctly configured/built for production so it never resolves to an empty/incorrect canister ID or an unreachable host in the live deployment.",
+      "files": [
+        "frontend/src/features/backend/actorDiagnostics.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

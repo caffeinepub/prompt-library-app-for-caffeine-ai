@@ -41,6 +41,13 @@ actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
+  // Connectivity check - accessible to all callers including guests
+  // This allows early detection of canister/config mismatches during app startup
+  public query ({ caller }) func backendConnectivityCheck() : async () {
+    // No authorization check - this is a health check endpoint
+    // accessible to any caller to diagnose connectivity issues
+  };
+
   // User profile management
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
