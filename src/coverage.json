@@ -1,110 +1,79 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T20:06:06.659Z",
+  "generatedAt": "2026-02-17T20:35:21.079Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
+    "total": 3,
     "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Implement backend persistence for the prompt library so that prompts (including rich-text HTML content with color formatting), categories, and related metadata are stored per authenticated user (Internet Identity principal) and can be loaded back reliably after refresh/search.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
+        "summary": "Fix the '+ Add Prompt' Save flow so a newly created prompt is reliably persisted (backend + in-memory UI state) instead of the dialog closing with the prompt missing.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/prompts/PromptEditorDialog.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/features/backend/usePromptLibrarySync.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/prompts/PromptEditorDialog.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/features/backend/usePromptLibrarySync.ts"
+        ]
       },
       {
         "id": "REQ-2",
-        "summary": "Update the frontend data flow to load prompts/categories from the backend after login and to save all prompt edits (including text color changes) to the backend, so that searching for a saved prompt displays the same rich-text colors originally saved.",
+        "summary": "Ensure categories entered/selected in the prompt editor are persisted so that any new category created during '+ Add Prompt' appears under Favorites in the category filter bar immediately after saving the prompt and remains after refresh.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/features/backend/promptLibraryApi.ts",
           "frontend/src/features/backend/usePromptLibrarySync.ts",
-          "frontend/src/features/storage/useAutoPersist.ts",
-          "frontend/src/features/storage/localStorage.ts",
-          "frontend/src/features/prompts/promptStore.ts",
           "frontend/src/features/categories/categoryStore.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/components/categories/ManageCategoriesDialog.tsx",
-          "frontend/src/components/importExport/ImportExportControls.tsx"
+          "frontend/src/components/categories/CategoryPicker.tsx",
+          "frontend/src/features/backend/promptLibraryApi.ts"
         ],
         "matchedFiles": [
-          "frontend/src/features/backend/promptLibraryApi.ts",
           "frontend/src/features/backend/usePromptLibrarySync.ts",
-          "frontend/src/features/storage/useAutoPersist.ts",
-          "frontend/src/features/storage/localStorage.ts",
-          "frontend/src/features/prompts/promptStore.ts",
           "frontend/src/features/categories/categoryStore.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/components/categories/ManageCategoriesDialog.tsx",
-          "frontend/src/components/importExport/ImportExportControls.tsx"
+          "frontend/src/components/categories/CategoryPicker.tsx",
+          "frontend/src/features/backend/promptLibraryApi.ts"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Fix rich-text paste handling in the \"+ Add Prompt\" / prompt editor so that pasting formatted text from Microsoft Word preserves supported formatting (especially text colors) by capturing clipboard HTML when available and sanitizing it into the app’s allowed HTML subset.",
+        "summary": "Make clicking a category in the CategoryFilterBar correctly filter and allow opening prompts within that category, using the currently selected view mode (list/grid/table) behavior.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/features/richText/SimpleRichTextEditor.tsx",
-          "frontend/src/features/richText/sanitizeHtml.ts",
-          "frontend/src/components/prompts/PromptEditorDialog.tsx"
+          "frontend/src/App.tsx",
+          "frontend/src/components/categories/CategoryFilterBar.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/features/richText/SimpleRichTextEditor.tsx",
-          "frontend/src/features/richText/sanitizeHtml.ts",
-          "frontend/src/components/prompts/PromptEditorDialog.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Set the uploaded image as the app’s browser-tab favicon by generating the required favicon PNG sizes and ensuring the HTML favicon links reference those generated assets.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/public/assets/generated/favicon.dim_16x16.png",
-          "frontend/public/assets/generated/favicon.dim_32x32.png",
-          "frontend/index.html"
-        ],
-        "matchedFiles": [
-          "frontend/public/assets/generated/favicon.dim_16x16.png",
-          "frontend/public/assets/generated/favicon.dim_32x32.png"
+          "frontend/src/App.tsx",
+          "frontend/src/components/categories/CategoryFilterBar.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/authorization/MixinAuthorization.mo",
-    "backend/authorization/access-control.mo",
     "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/assets/generated/favicon.dim_16x16.png",
-    "frontend/public/assets/generated/favicon.dim_32x32.png",
     "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/categories/ManageCategoriesDialog.tsx",
-    "frontend/src/components/importExport/ImportExportControls.tsx",
+    "frontend/src/components/categories/CategoryFilterBar.tsx",
+    "frontend/src/components/categories/CategoryPicker.tsx",
     "frontend/src/components/prompts/PromptEditorDialog.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
     "frontend/src/features/backend/promptLibraryApi.ts",
     "frontend/src/features/backend/usePromptLibrarySync.ts",
     "frontend/src/features/categories/categoryStore.ts",
-    "frontend/src/features/prompts/promptStore.ts",
-    "frontend/src/features/richText/SimpleRichTextEditor.tsx",
-    "frontend/src/features/richText/sanitizeHtml.ts",
-    "frontend/src/features/storage/localStorage.ts",
-    "frontend/src/features/storage/useAutoPersist.ts",
-    "frontend/src/hooks/useActor.ts",
-    "frontend/src/utils/urlParams.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

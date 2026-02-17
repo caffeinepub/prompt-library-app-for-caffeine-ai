@@ -23,6 +23,7 @@ export interface Prompt {
   'tags' : Array<string>,
   'author' : string,
 }
+export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
@@ -33,10 +34,13 @@ export interface _SERVICE {
   'deletePrompt' : ActorMethod<[string], undefined>,
   'getAllCategories' : ActorMethod<[], Array<Category>>,
   'getAllPrompts' : ActorMethod<[], Array<Prompt>>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getCategory' : ActorMethod<[string], [] | [Category]>,
   'getPrompt' : ActorMethod<[string], [] | [Prompt]>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'saveCategory' : ActorMethod<[Category], undefined>,
   'savePrompt' : ActorMethod<[Prompt], undefined>,
   'searchPrompts' : ActorMethod<[string], Array<Prompt>>,

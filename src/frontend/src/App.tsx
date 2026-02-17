@@ -134,6 +134,7 @@ function App() {
           dateModified: Date.now(),
         };
         await savePrompt(updatedPrompt);
+        toast.success('Prompt updated successfully');
       } else {
         // Create new prompt
         const newPrompt: Prompt = {
@@ -143,10 +144,11 @@ function App() {
           dateModified: Date.now(),
         };
         await savePrompt(newPrompt);
+        toast.success('Prompt saved successfully');
       }
-      await refreshFromBackend();
     } catch (error) {
-      // Error already shown by sync hook
+      // Error already shown by sync hook, re-throw to keep dialog open
+      throw error;
     }
   };
 
@@ -158,7 +160,7 @@ function App() {
     if (deleteConfirm) {
       try {
         await deletePromptBackend(deleteConfirm);
-        await refreshFromBackend();
+        toast.success('Prompt deleted successfully');
       } catch (error) {
         // Error already shown by sync hook
       }
@@ -180,16 +182,26 @@ function App() {
 
     try {
       await savePrompt(duplicated);
-      await refreshFromBackend();
+      toast.success('Prompt duplicated successfully');
     } catch (error) {
       // Error already shown by sync hook
     }
   };
 
   const handleFavoritesToggle = () => {
-    setShowFavoritesOnly(!showFavoritesOnly);
-    if (!showFavoritesOnly) {
+    const newShowFavorites = !showFavoritesOnly;
+    setShowFavoritesOnly(newShowFavorites);
+    // Clear category selection when enabling favorites
+    if (newShowFavorites) {
       setSelectedCategory(null);
+    }
+  };
+
+  const handleCategorySelect = (category: string | null) => {
+    setSelectedCategory(category);
+    // Clear favorites when selecting a category
+    if (category !== null) {
+      setShowFavoritesOnly(false);
     }
   };
 
@@ -256,7 +268,7 @@ function App() {
             <CategoryFilterBar
               selectedCategory={selectedCategory}
               showFavoritesOnly={showFavoritesOnly}
-              onCategorySelect={setSelectedCategory}
+              onCategorySelect={handleCategorySelect}
               onFavoritesToggle={handleFavoritesToggle}
             />
             <div className="flex items-center justify-between">

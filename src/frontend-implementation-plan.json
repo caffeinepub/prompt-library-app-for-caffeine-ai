@@ -1,114 +1,83 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Prompt Library: frontend backend-sync for rich-text colors, improved Word paste, and favicon assets",
+  "title": "Fix Add Prompt persistence for prompts and categories",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Load prompts/categories from backend after login and persist all prompt/category changes (including rich-text colors) to backend, replacing localStorage as source of truth.",
+      "id": "REQ-1",
+      "summary": "Make '+ Add Prompt' Save await backend persistence and update in-memory state without closing on failure.",
       "acceptanceCriteria": [
-        "After login, the app fetches prompts/categories from the backend and populates the existing Zustand stores used by the UI.",
-        "Creating a prompt, editing a prompt (including color changes), deleting, duplicating, and toggling favorite update the backend and then reflect in the UI.",
-        "Search results and prompt previews render the stored prompt content via the existing PromptContent component (sanitized HTML) and preserve text colors (do not revert to black).",
-        "localStorage auto-persist is no longer the source of truth for prompts/categories once backend persistence is enabled (no overwriting backend-sourced rich text with stale local data)."
+        "Creating a new prompt (Title + Content + at least one Category) and clicking Save results in the prompt appearing in the currently active view/filter state as soon as Save completes.",
+        "After a full page refresh and re-authentication, the newly created prompt is still present (loaded from the backend).",
+        "If the backend call fails, the dialog remains open and an error toast is shown; the prompt is not silently lost."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/backend/promptLibraryApi.ts",
-          "operation": "create",
-          "description": "Create a small API layer that uses the backend actor (from the core-infrastructure actor configuration) to fetch prompts/categories and perform prompt/category mutations (save/delete/search). Include mapping helpers between backend Prompt/Category types and the app’s Zustand Prompt/category representations, ensuring prompt.content remains an HTML string and is not re-sanitized in a way that strips allowed inline color styling. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
-          "operation": "create",
-          "description": "Add a React hook that, once the user is authenticated and the actor is available, loads prompts/categories from the backend into the existing Zustand stores and exposes async action wrappers for create/edit/delete/duplicate/favorite/category changes that write to backend first (or write then refresh) and update Zustand on success. Ensure logout clears in-memory prompt/category state. Use authorization guidance to keep app data hidden until logged in and handle unauthorized backend failures gracefully. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/features/storage/useAutoPersist.ts",
+          "path": "frontend/src/components/prompts/PromptEditorDialog.tsx",
           "operation": "modify",
-          "description": "Stop loading/saving prompts and categories from/to localStorage as the primary data source once backend persistence is enabled. Keep persisting only non-sensitive UI preferences (e.g., viewMode) to localStorage, and avoid overwriting backend-loaded Zustand state on mount."
-        },
-        {
-          "path": "frontend/src/features/storage/localStorage.ts",
-          "operation": "modify",
-          "description": "Adjust storage schema and helpers to persist only UI preferences needed across refresh (e.g., viewMode), removing prompts/categories from persisted storage to prevent stale rich-text HTML overwriting backend-sourced data."
-        },
-        {
-          "path": "frontend/src/features/prompts/promptStore.ts",
-          "operation": "modify",
-          "description": "Add minimal store support needed for backend-sync flow (e.g., a clear/reset action for logout, and/or a replace/upsert helper) without moving CRUD into the store if handled by the sync hook. Ensure store setters can accept backend-loaded prompt arrays without re-sanitizing content."
-        },
-        {
-          "path": "frontend/src/features/categories/categoryStore.ts",
-          "operation": "modify",
-          "description": "Add minimal store support needed for backend-sync flow (e.g., clear/reset action for logout, and/or replace/set helpers) so backend-loaded categories become the single source of truth in UI state."
+          "description": "Change the Save handler to support an async onSave (Promise-based), show a saving/disabled state, and only close the shadcn-ui Dialog after onSave resolves successfully; keep dialog open on error. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Wire backend-sync into the authenticated app flow: after login, trigger loading prompts/categories from backend and populate Zustand stores; replace direct Zustand mutations (add/update/delete/duplicate/toggle favorite and category changes) with async wrappers that persist to backend and then update UI. Ensure in-memory prompt/category data is cleared on logout (in addition to query cache clearing) per authorization guidance. Verify the component's usage instructions before implementing."
+          "description": "Update the prompt save flow to return/await a Promise from the editor, avoid unconditional refresh that can mask save failures, and ensure the saved prompt remains visible under the current filters without forced navigation. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/categories/ManageCategoriesDialog.tsx",
+          "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
           "operation": "modify",
-          "description": "Route category rename/delete actions through the backend-sync action wrappers so category edits and deletions are persisted to backend and reflected in prompt/category Zustand state after completion. Verify the component's usage instructions before implementing."
+          "description": "Harden savePrompt to update Zustand prompt state deterministically (no stale-closure loss), propagate errors so the caller can keep the editor open, and ensure backend-synced prompts are merged without dropping newly created items. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Persist new categories created/selected during '+ Add Prompt' and reflect them in the CategoryFilterBar immediately and after refresh, without duplicates.",
+      "acceptanceCriteria": [
+        "When saving a prompt that includes a brand-new category name, that category appears in the CategoryFilterBar list (under the Favorites button) without requiring a manual refresh action.",
+        "After a full page refresh and re-authentication, the new category is still present in the CategoryFilterBar list (loaded from backend).",
+        "Saving a prompt with only existing categories does not create duplicate categories in the UI list or backend."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
+          "operation": "modify",
+          "description": "Ensure saving a prompt also persists any missing categories to the backend (before or alongside prompt save), then updates the category store so CategoryFilterBar reflects the new category immediately; avoid re-creating categories that already exist. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/importExport/ImportExportControls.tsx",
+          "path": "frontend/src/features/categories/categoryStore.ts",
           "operation": "modify",
-          "description": "After a successful import into Zustand, persist imported prompts/categories to backend using the backend-sync layer (batch via sequential saves/refresh), so imported rich-text HTML (including colors) round-trips through backend and remains visible in search/previews. Verify the component's usage instructions before implementing."
+          "description": "Prevent duplicate category entries by enforcing trimmed + case-insensitive uniqueness for add/rename operations, so new categories don't appear multiple times in the filter bar. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/categories/CategoryPicker.tsx",
+          "operation": "modify",
+          "description": "When creating a category, avoid adding duplicates to selectedCategories (including case/whitespace variants) and ensure the newly created category is selected exactly once for the prompt being edited. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/features/backend/promptLibraryApi.ts",
+          "operation": "modify",
+          "description": "Align category mapping with the UI’s uniqueness rules (e.g., stable ID generation for equivalent names) to reduce duplicate persistence and improve consistency across refreshes. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Preserve supported formatting (especially text colors) when pasting from Microsoft Word by capturing clipboard HTML and sanitizing into the app’s allowed HTML subset.",
+      "summary": "Fix category selection behavior so clicking a category reliably filters results and remains compatible with the current list/grid/table view behavior.",
       "acceptanceCriteria": [
-        "Pasting from Microsoft Word into the rich text editor keeps text color formatting when the clipboard provides HTML (do not force plaintext-only paste).",
-        "The pasted content is sanitized to the app’s safe subset while preserving text color styling where present (e.g., span color styles).",
-        "Saving the prompt after a Word paste and then searching/opening the prompt shows the same colors as pasted (within supported formatting)."
+        "After saving a prompt into a category, clicking that category filters the prompt list to show the prompt(s) in that category.",
+        "In list/grid/table view modes, selecting a prompt in the filtered results opens the existing prompt preview behavior for that view (no broken/empty preview).",
+        "The app stays on the current view after Save (no forced navigation)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/richText/SimpleRichTextEditor.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Update paste handling to prefer clipboard 'text/html' when available: sanitize the HTML into the allowed subset (preserving span color styles) and insert sanitized HTML into the editor; fall back to plaintext only when HTML is not available. Verify the component's usage instructions before implementing."
+          "description": "Adjust filter state interactions so selecting a category disables Favorites-only mode (instead of intersecting filters unexpectedly), and preserve the active view mode after Save while keeping filtered results stable. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/features/richText/sanitizeHtml.ts",
+          "path": "frontend/src/components/categories/CategoryFilterBar.tsx",
           "operation": "modify",
-          "description": "Extend/adjust sanitization rules to better support common Word HTML while remaining safe: preserve inline text color styling (e.g., span style color) and keep reasonable structure/line breaks for pasted content, without allowing unsafe tags/attributes. Ensure sanitizer does not normalize all text to black when a color style exists."
-        },
-        {
-          "path": "frontend/src/components/prompts/PromptEditorDialog.tsx",
-          "operation": "modify",
-          "description": "Confirm the editor save flow sanitizes pasted HTML once (at save) and does not accidentally strip color styling; ensure the editor’s value/state handling does not overwrite pasted HTML with plaintext. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Use the uploaded icon as the browser-tab favicon by adding generated 16x16 and 32x32 PNG assets and referencing them in the HTML.",
-      "acceptanceCriteria": [
-        "The favicon displayed in the browser tab matches the uploaded image.",
-        "frontend/index.html references the generated favicon files under /assets/generated/ for 16x16 and 32x32 PNG sizes.",
-        "No favicon changes are required beyond the main app tab/favicon behavior."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/public/assets/generated/favicon.dim_16x16.png",
-          "operation": "create",
-          "description": "Add the generated favicon asset at frontend/public/assets/generated/favicon.dim_16x16.png (from the provided generated asset list) so it is served as a static file."
-        },
-        {
-          "path": "frontend/public/assets/generated/favicon.dim_32x32.png",
-          "operation": "create",
-          "description": "Add the generated favicon asset at frontend/public/assets/generated/favicon.dim_32x32.png (from the provided generated asset list) so it is served as a static file."
-        },
-        {
-          "path": "frontend/index.html",
-          "operation": "modify",
-          "description": "Ensure favicon link tags reference /assets/generated/favicon.dim_32x32.png and /assets/generated/favicon.dim_16x16.png and remove/avoid any conflicting favicon declarations so the uploaded image is the favicon."
+          "description": "Ensure category click interactions remain deterministic (toggle on/off) and integrate cleanly with the app’s filter state (category vs favorites) so filtering works immediately after saving new categories. Verify the component's usage instructions before implementing."
         }
       ]
     }

@@ -14,17 +14,29 @@ export const useCategoryStore = create<CategoryStore>((set) => ({
   
   addCategory: (name) => set((state) => {
     const trimmed = name.trim();
-    if (!trimmed || state.categories.includes(trimmed)) {
-      return state;
-    }
+    if (!trimmed) return state;
+    
+    // Check for case-insensitive duplicates
+    const exists = state.categories.some(
+      existing => existing.toLowerCase() === trimmed.toLowerCase()
+    );
+    
+    if (exists) return state;
+    
     return { categories: [...state.categories, trimmed] };
   }),
   
   renameCategory: (oldName, newName) => set((state) => {
     const trimmed = newName.trim();
-    if (!trimmed || state.categories.includes(trimmed)) {
-      return state;
-    }
+    if (!trimmed) return state;
+    
+    // Check for case-insensitive duplicates (excluding the old name)
+    const exists = state.categories.some(
+      existing => existing !== oldName && existing.toLowerCase() === trimmed.toLowerCase()
+    );
+    
+    if (exists) return state;
+    
     return {
       categories: state.categories.map((c) => (c === oldName ? trimmed : c)),
     };

@@ -20,6 +20,15 @@ export function CategoryFilterBar({
 }: CategoryFilterBarProps) {
   const categories = useCategoryStore((state) => state.categories);
 
+  const handleCategoryClick = (category: string) => {
+    // Toggle category selection
+    if (selectedCategory === category) {
+      onCategorySelect(null);
+    } else {
+      onCategorySelect(category);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex gap-2">
@@ -41,7 +50,7 @@ export function CategoryFilterBar({
                 key={category}
                 variant={selectedCategory === category ? 'default' : 'outline'}
                 className="cursor-pointer hover:bg-primary/80 transition-colors"
-                onClick={() => onCategorySelect(selectedCategory === category ? null : category)}
+                onClick={() => handleCategoryClick(category)}
               >
                 {category}
               </Badge>

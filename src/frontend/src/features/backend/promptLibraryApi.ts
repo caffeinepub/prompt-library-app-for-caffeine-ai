@@ -6,6 +6,11 @@ import { Prompt } from '../prompts/types';
  * Maps between frontend Prompt types and backend Prompt types.
  */
 
+// Generate stable category ID from name
+function generateCategoryId(name: string): string {
+  return name.toLowerCase().trim().replace(/\s+/g, '-');
+}
+
 // Map frontend Prompt to backend Prompt
 export function toBackendPrompt(prompt: Prompt): BackendPrompt {
   return {
@@ -38,9 +43,10 @@ export function fromBackendCategory(backendCategory: BackendCategory): string {
 
 // Map frontend category string to backend Category
 export function toBackendCategory(categoryName: string): BackendCategory {
+  const trimmed = categoryName.trim();
   return {
-    id: categoryName.toLowerCase().replace(/\s+/g, '-'),
-    name: categoryName,
+    id: generateCategoryId(trimmed),
+    name: trimmed,
     description: '',
   };
 }

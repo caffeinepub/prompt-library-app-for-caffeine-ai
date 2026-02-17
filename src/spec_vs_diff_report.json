@@ -1,70 +1,61 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T20:06:06.656Z",
-  "summary": "Backend now has per-principal prompt/category storage with CRUD-style methods and the frontend adds a backend-sync layer plus improved rich-text sanitization/paste handling. However, favicon generation/linking is not shown, and favorite/metadata persistence to backend appears incomplete (favorites/dates not stored and favorites explicitly derived locally). Some unrelated URL/session parameter utilities and admin-token plumbing were added without being requested.",
+  "generatedAt": "2026-02-17T20:35:21.076Z",
+  "summary": "Diff implements backend prompt persistence APIs and introduces a frontend backend-sync layer plus improved category selection/deduping and category bar click toggling. However, the diff evidence is truncated around the critical save/update paths, so it is not fully verifiable that newly-saved prompts/categories are always inserted into in-memory UI state immediately after Save, nor that category-based filtering + prompt opening works correctly in all view modes.",
   "missing_requirements": [
     {
-      "id": "REQ-2",
-      "requirement": "Creating a prompt, editing a prompt, deleting, duplicating, and toggling favorite update the backend and then reflect in the UI.",
-      "reason": "The diff shows backend prompt type and API mappings that do not include isFavorite or date metadata; frontend mapping explicitly sets isFavorite=false and derives it from local state, which means toggling favorite is not persisted to the backend. Duplicate behavior persistence is not evidenced in the shown backend-sync wrapper (file is truncated).",
-      "evidence": [
-        "frontend/src/features/backend/promptLibraryApi.ts",
-        "frontend/src/features/backend/usePromptLibrarySync.ts (truncated)",
-        "backend/main.mo (truncated)"
-      ]
-    },
-    {
       "id": "REQ-1",
-      "requirement": "Prompts (including related metadata) are stored per authenticated user and round-trip reliably from backend without losing required state.",
-      "reason": "Backend Prompt type lacks fields for common UI metadata (e.g., isFavorite, dateAdded, dateModified). Frontend mapping fabricates dates with Date.now() and sets isFavorite to false, so this metadata cannot round-trip reliably from backend.",
+      "requirement": "After clicking Save on '+ Add Prompt', the newly created prompt appears in the currently active view/filter state as soon as Save completes; after refresh it is still present; on backend failure the dialog stays open and an error toast is shown.",
+      "reason": "Backend persistence and dialog behavior are partially evidenced (dialog closes only on success), but the diff summary is truncated for the save flow wiring (App -> onSave handler -> store update + backend call) and for the error toast on save failure. There is no clear evidence that the prompt is inserted into the in-memory prompt list immediately after a successful save under the current filter/view.",
       "evidence": [
-        "backend/main.mo (truncated)",
-        "frontend/src/features/backend/promptLibraryApi.ts"
+        "frontend/src/components/prompts/PromptEditorDialog.tsx (only closes dialog after awaited onSave; no toast here)",
+        "frontend/src/features/backend/usePromptLibrarySync.ts (savePrompt implementation truncated before showing store update / toasts)",
+        "frontend/src/App.tsx (truncated; onSave wiring and view/filter update not shown)"
       ]
     },
     {
-      "id": "REQ-4",
-      "requirement": "Set the uploaded image as the app’s browser-tab favicon by generating 16x16 and 32x32 PNG assets and referencing them from frontend/index.html under /assets/generated/.",
-      "reason": "No diff evidence shows generated favicon PNG files or any update to frontend/index.html to reference /assets/generated/favicon.dim_16x16.png and /assets/generated/favicon.dim_32x32.png.",
-      "evidence": []
+      "id": "REQ-2",
+      "requirement": "New categories created during '+ Add Prompt' are persisted and appear in CategoryFilterBar immediately after saving the prompt and remain after refresh; saving with existing categories does not create duplicates.",
+      "reason": "UI-side category dedupe/add is implemented, and backend category APIs exist, but the sync/persistence path for newly-created categories during prompt save is truncated. Also, immediate appearance in the CategoryFilterBar after saving the prompt depends on store updates after save, which are not fully visible.",
+      "evidence": [
+        "frontend/src/components/categories/CategoryPicker.tsx (adds category to store immediately; does not show backend persistence)",
+        "frontend/src/features/backend/usePromptLibrarySync.ts (logic to find/persist new categories is present but truncated before completion)",
+        "frontend/src/features/backend/promptLibraryApi.ts (saveCategory exists, but no evidence it is invoked successfully in the save flow)",
+        "frontend/src/features/categories/categoryStore.ts (case-insensitive duplicate prevention)"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Clicking a category filters prompts and selecting a prompt in list/grid/table opens the existing prompt preview behavior for that view; app stays on current view after Save.",
+      "reason": "CategoryFilterBar now toggles selection deterministically, but there is no direct diff evidence that category selection is correctly hooked into prompt filtering results and that prompt opening/preview works across list/grid/table in the filtered state. The relevant view components and selection handlers are not shown in the diff summary.",
+      "evidence": [
+        "frontend/src/components/categories/CategoryFilterBar.tsx (only toggles selectedCategory via callback; no filtering/preview logic here)",
+        "frontend/src/App.tsx (truncated; filtering + view-mode prompt-open behavior not verifiable from provided excerpt)"
+      ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "URL parameter + sessionStorage utilities (including mention of persisting an admin token) added.",
-      "reason": "Not requested by any REQ; BuildRequest is about backend prompt persistence, rich-text paste preservation, and favicon generation/linking.",
+      "description": "Changed persistence strategy to no longer store prompts/categories in browser localStorage and to persist only UI preferences (viewMode).",
+      "reason": "The BuildRequest focuses on fixing '+ Add Prompt' persistence to backend and UI state, not on changing/removing existing localStorage persistence behavior. This may be an implementation choice, but it is not explicitly requested.",
       "evidence": [
-        "frontend/src/utils/urlParams.ts"
-      ]
-    },
-    {
-      "description": "Frontend actor initialization now pulls an admin secret from URL params and calls _initializeAccessControlWithSecret.",
-      "reason": "Not requested by any REQ; authentication scope specified only Internet Identity principal-based per-user storage.",
-      "evidence": [
-        "frontend/src/hooks/useActor.ts"
+        "frontend-file-summaries.txt (frontend/src/features/storage/localStorage.ts: 'no longer stores prompts or categories')",
+        "frontend-file-summaries.txt (frontend/src/features/storage/useAutoPersist.ts: 'persists only UI preferences (viewMode)')"
       ]
     }
   ],
-  "confidence": 0.7,
+  "confidence": 0.56,
   "changed_files": [
     "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
     "frontend/src/App.tsx",
-    "frontend/src/components/categories/ManageCategoriesDialog.tsx",
-    "frontend/src/components/importExport/ImportExportControls.tsx",
+    "frontend/src/components/categories/CategoryFilterBar.tsx",
+    "frontend/src/components/categories/CategoryPicker.tsx",
     "frontend/src/components/prompts/PromptEditorDialog.tsx",
     "frontend/src/features/backend/promptLibraryApi.ts",
     "frontend/src/features/backend/usePromptLibrarySync.ts",
     "frontend/src/features/categories/categoryStore.ts",
-    "frontend/src/features/prompts/promptStore.ts",
-    "frontend/src/features/richText/SimpleRichTextEditor.tsx",
-    "frontend/src/features/richText/sanitizeHtml.ts",
-    "frontend/src/features/storage/localStorage.ts",
-    "frontend/src/features/storage/useAutoPersist.ts",
-    "frontend/src/hooks/useActor.ts",
-    "frontend/src/utils/urlParams.ts",
     "project_state.json"
   ]
 }

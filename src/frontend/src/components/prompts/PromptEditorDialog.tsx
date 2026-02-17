@@ -20,7 +20,7 @@ interface PromptEditorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   prompt?: Prompt;
-  onSave: (data: Omit<Prompt, 'id' | 'dateAdded' | 'dateModified'>) => void;
+  onSave: (data: Omit<Prompt, 'id' | 'dateAdded' | 'dateModified'>) => Promise<void>;
 }
 
 export function PromptEditorDialog({
@@ -33,6 +33,7 @@ export function PromptEditorDialog({
   const [content, setContent] = useState('');
   const [categories, setCategories] = useState<string[]>([]);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (prompt) {
@@ -48,20 +49,28 @@ export function PromptEditorDialog({
     }
   }, [prompt, open]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const trimmedTitle = title.trim();
     const sanitizedContent = sanitizeHtml(content);
     
     if (!trimmedTitle || !sanitizedContent.trim()) return;
 
-    onSave({
-      title: trimmedTitle,
-      content: sanitizedContent,
-      categories,
-      isFavorite,
-    });
-
-    onOpenChange(false);
+    setIsSaving(true);
+    try {
+      await onSave({
+        title: trimmedTitle,
+        content: sanitizedContent,
+        categories,
+        isFavorite,
+      });
+      // Only close on successful save
+      onOpenChange(false);
+    } catch (error) {
+      // Error already shown by parent, keep dialog open
+      console.error('Save failed:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const isContentEmpty = !content.trim() || content === '<br>';
@@ -84,6 +93,7 @@ export function PromptEditorDialog({
               placeholder="Enter prompt title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              disabled={isSaving}
             />
           </div>
 
@@ -109,17 +119,18 @@ export function PromptEditorDialog({
               id="favorite"
               checked={isFavorite}
               onCheckedChange={setIsFavorite}
+              disabled={isSaving}
             />
             <Label htmlFor="favorite">Mark as favorite</Label>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={!title.trim() || isContentEmpty}>
-            Save
+          <Button onClick={handleSave} disabled={!title.trim() || isContentEmpty || isSaving}>
+            {isSaving ? 'Saving...' : 'Save'}
           </Button>
         </DialogFooter>
       </DialogContent>

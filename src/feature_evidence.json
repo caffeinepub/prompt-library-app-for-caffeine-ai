@@ -2,18 +2,34 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-frontend-data-flow-to-load-prompts-categories-from-the-backend-after-login-and-to-save-all-prompt-edits-including-text-color-changes-to-the-backend-so-that-searching-for-a-saved-prompt-displays-the-same-rich-text-colors-originally-saved",
-      "featureTitle": "Update the frontend data flow to load prompts/categories from the backend after login and to save all prompt edits (including text color changes) to the backend, so that searching for a saved prompt displays the same rich-text colors originally saved.",
+      "featureId": "feature-fix-the-add-prompt-save-flow-so-a-newly-created-prompt-is-reliably-persisted-backend-in-memory-ui-state-instead-of-the-dialog-closing-with-the-prompt-missing",
+      "featureTitle": "Fix the '+ Add Prompt' Save flow so a newly created prompt is reliably persisted (backend + in-memory UI state) instead of the dialog closing with the prompt missing.",
       "files": [
         "frontend/src/App.tsx",
-        "frontend/src/components/categories/ManageCategoriesDialog.tsx",
-        "frontend/src/components/importExport/ImportExportControls.tsx",
+        "frontend/src/components/prompts/PromptEditorDialog.tsx",
+        "frontend/src/features/backend/usePromptLibrarySync.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-categories-entered-selected-in-the-prompt-editor-are-persisted-so-that-any-new-category-created-during-add-prompt-appears-under-favorites-in-the-category-filter-bar-immediately-after-saving-the-prompt-and-remains-after-refresh",
+      "featureTitle": "Ensure categories entered/selected in the prompt editor are persisted so that any new category created during '+ Add Prompt' appears under Favorites in the category filter bar immediately after saving the prompt and remains after refresh.",
+      "files": [
+        "frontend/src/components/categories/CategoryPicker.tsx",
         "frontend/src/features/backend/promptLibraryApi.ts",
         "frontend/src/features/backend/usePromptLibrarySync.ts",
-        "frontend/src/features/categories/categoryStore.ts",
-        "frontend/src/features/prompts/promptStore.ts",
-        "frontend/src/features/storage/localStorage.ts",
-        "frontend/src/features/storage/useAutoPersist.ts"
+        "frontend/src/features/categories/categoryStore.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -29,12 +45,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-fix-rich-text-paste-handling-in-the-add-prompt-prompt-editor-so-that-pasting-formatted-text-from-microsoft-word-preserves-supported-formatting-especially-text-colors-by-capturing-clipboard-html-when-available-and-sanitizing-it-into-the-app-s-allowed-html-subset",
-      "featureTitle": "Fix rich-text paste handling in the \"+ Add Prompt\" / prompt editor so that pasting formatted text from Microsoft Word preserves supported formatting (especially text colors) by capturing clipboard HTML when available and sanitizing it into the app’s allowed HTML subset.",
+      "featureId": "feature-make-clicking-a-category-in-the-categoryfilterbar-correctly-filter-and-allow-opening-prompts-within-that-category-using-the-currently-selected-view-mode-list-grid-table-behavior",
+      "featureTitle": "Make clicking a category in the CategoryFilterBar correctly filter and allow opening prompts within that category, using the currently selected view mode (list/grid/table) behavior.",
       "files": [
-        "frontend/src/components/prompts/PromptEditorDialog.tsx",
-        "frontend/src/features/richText/SimpleRichTextEditor.tsx",
-        "frontend/src/features/richText/sanitizeHtml.ts"
+        "frontend/src/App.tsx",
+        "frontend/src/components/categories/CategoryFilterBar.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -46,23 +61,6 @@
       ],
       "testIds": [
         "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-set-the-uploaded-image-as-the-app-s-browser-tab-favicon-by-generating-the-required-favicon-png-sizes-and-ensuring-the-html-favicon-links-reference-those-generated-assets",
-      "featureTitle": "Set the uploaded image as the app’s browser-tab favicon by generating the required favicon PNG sizes and ensuring the HTML favicon links reference those generated assets.",
-      "files": [],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
       ],
       "confidence": "high"
     }

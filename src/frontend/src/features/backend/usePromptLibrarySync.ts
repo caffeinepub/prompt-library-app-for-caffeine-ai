@@ -16,11 +16,9 @@ export function usePromptLibrarySync() {
   const { identity } = useInternetIdentity();
   const isAuthenticated = identity && !identity.getPrincipal().isAnonymous();
   
-  const prompts = usePromptStore((state) => state.prompts);
   const setPrompts = usePromptStore((state) => state.setPrompts);
   const clearPrompts = usePromptStore((state) => state.clearPrompts);
   
-  const categories = useCategoryStore((state) => state.categories);
   const setCategories = useCategoryStore((state) => state.setCategories);
   const clearCategories = useCategoryStore((state) => state.clearCategories);
   
@@ -50,9 +48,12 @@ export function usePromptLibrarySync() {
           api.getAllCategories(),
         ]);
         
+        // Get current state for merging favorites
+        const currentPrompts = usePromptStore.getState().prompts;
+        
         // Merge with local favorites state
         const mergedPrompts = backendPrompts.map(bp => {
-          const localPrompt = prompts.find(p => p.id === bp.id);
+          const localPrompt = currentPrompts.find(p => p.id === bp.id);
           return {
             ...bp,
             isFavorite: localPrompt?.isFavorite || false,
@@ -75,7 +76,7 @@ export function usePromptLibrarySync() {
     };
 
     loadData();
-  }, [isAuthenticated, actor, actorFetching]);
+  }, [isAuthenticated, actor, actorFetching, setPrompts, setCategories]);
 
   // Clear data on logout
   useEffect(() => {
@@ -90,29 +91,53 @@ export function usePromptLibrarySync() {
   const savePrompt = useCallback(async (prompt: Prompt) => {
     if (!apiRef.current) {
       toast.error('Not connected to backend');
-      return;
+      throw new Error('Not connected to backend');
     }
     
     try {
+      // Get current state
+      const currentCategories = useCategoryStore.getState().categories;
+      const currentPrompts = usePromptStore.getState().prompts;
+      
+      // Find new categories that need to be persisted
+      const newCategories = prompt.categories.filter(cat => {
+        const trimmed = cat.trim();
+        return !currentCategories.some(existing => 
+          existing.toLowerCase() === trimmed.toLowerCase()
+        );
+      });
+      
+      // Persist new categories first
+      for (const categoryName of newCategories) {
+        const trimmed = categoryName.trim();
+        if (trimmed) {
+          await apiRef.current.saveCategory(trimmed);
+          // Update local category store
+          useCategoryStore.getState().addCategory(trimmed);
+        }
+      }
+      
+      // Now save the prompt
       await apiRef.current.savePrompt(prompt);
-      // Update local state
-      const existing = prompts.find(p => p.id === prompt.id);
+      
+      // Update local prompt state deterministically
+      const existing = currentPrompts.find(p => p.id === prompt.id);
       if (existing) {
         usePromptStore.getState().updatePrompt(prompt.id, prompt);
       } else {
-        usePromptStore.getState().setPrompts([...prompts, prompt]);
+        usePromptStore.getState().setPrompts([...currentPrompts, prompt]);
       }
     } catch (error: any) {
       console.error('Failed to save prompt:', error);
       toast.error('Failed to save prompt');
       throw error;
     }
-  }, [prompts]);
+  }, []);
 
   const deletePrompt = useCallback(async (promptId: string) => {
     if (!apiRef.current) {
       toast.error('Not connected to backend');
-      return;
+      throw new Error('Not connected to backend');
     }
     
     try {
@@ -128,7 +153,7 @@ export function usePromptLibrarySync() {
   const saveCategory = useCallback(async (categoryName: string) => {
     if (!apiRef.current) {
       toast.error('Not connected to backend');
-      return;
+      throw new Error('Not connected to backend');
     }
     
     try {
@@ -144,7 +169,7 @@ export function usePromptLibrarySync() {
   const deleteCategory = useCallback(async (categoryName: string) => {
     if (!apiRef.current) {
       toast.error('Not connected to backend');
-      return;
+      throw new Error('Not connected to backend');
     }
     
     try {
@@ -161,7 +186,7 @@ export function usePromptLibrarySync() {
   const renameCategory = useCallback(async (oldName: string, newName: string) => {
     if (!apiRef.current) {
       toast.error('Not connected to backend');
-      return;
+      throw new Error('Not connected to backend');
     }
     
     try {
@@ -188,8 +213,11 @@ export function usePromptLibrarySync() {
         apiRef.current.getAllCategories(),
       ]);
       
+      // Get current state for merging favorites
+      const currentPrompts = usePromptStore.getState().prompts;
+      
       const mergedPrompts = backendPrompts.map(bp => {
-        const localPrompt = prompts.find(p => p.id === bp.id);
+        const localPrompt = currentPrompts.find(p => p.id === bp.id);
         return {
           ...bp,
           isFavorite: localPrompt?.isFavorite || false,
@@ -202,7 +230,7 @@ export function usePromptLibrarySync() {
       console.error('Failed to refresh from backend:', error);
       toast.error('Failed to refresh data');
     }
-  }, [prompts, setPrompts, setCategories]);
+  }, [setPrompts, setCategories]);
 
   return {
     isReady: !!apiRef.current && hasLoadedRef.current,

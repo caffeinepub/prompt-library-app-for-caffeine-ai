@@ -1,14 +1,12 @@
-import Migration "migration";
 import Map "mo:core/Map";
 import Text "mo:core/Text";
 import List "mo:core/List";
-import Runtime "mo:core/Runtime";
-import Principal "mo:core/Principal";
 import Iter "mo:core/Iter";
+import Principal "mo:core/Principal";
+import Runtime "mo:core/Runtime";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
-(with migration = Migration.run)
 actor {
   // Data structure definitions
   type Prompt = {
@@ -31,12 +29,39 @@ actor {
     categories : Map.Map<Text, Category>;
   };
 
+  public type UserProfile = {
+    name : Text;
+  };
+
   // Actor state
   let usersData = Map.empty<Principal, UserData>();
+  let userProfiles = Map.empty<Principal, UserProfile>();
 
   // Mixin for authorization
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
+
+  // User profile management
+  public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can get profiles");
+    };
+    userProfiles.get(caller);
+  };
+
+  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
+    userProfiles.get(user);
+  };
+
+  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
+    userProfiles.add(caller, profile);
+  };
 
   // Helper function to get or initialize user data (for update calls)
   func getOrCreateUserData(user : Principal) : UserData {
@@ -66,6 +91,8 @@ actor {
 
     let userData = getOrCreateUserData(caller);
     userData.prompts.add(prompt.id, prompt);
+
+    // Ensure categories are persisted with prompt (in Prompt this is persist automatically)
   };
 
   public query ({ caller }) func getPrompt(promptId : Text) : async ?Prompt {
@@ -168,4 +195,3 @@ actor {
     };
   };
 };
-

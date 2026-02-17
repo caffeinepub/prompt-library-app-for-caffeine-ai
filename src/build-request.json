@@ -1,99 +1,79 @@
 {
   "kind": "build_request",
-  "title": "Persist rich-text prompt colors in backend and set uploaded favicon",
+  "title": "Fix '+ Add Prompt' Save to persist prompts and categories",
   "projectName": "Prompt Library",
-  "priority": "normal",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Implement backend persistence for the prompt library so that prompts (including rich-text HTML content with color formatting), categories, and related metadata are stored per authenticated user (Internet Identity principal) and can be loaded back reliably after refresh/search.",
-      "target": "backend",
+      "text": "Fix the '+ Add Prompt' Save flow so a newly created prompt is reliably persisted (backend + in-memory UI state) instead of the dialog closing with the prompt missing.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "recent-8"
+          "msg-1"
         ],
         "quotes": [
-          "Yes - the backend. And it would be nice if when I paste a prompt into the \"+ Add Prompt\", that has the colors already added in, that it will read that."
+          "When I go to \"+ Add Prompt\"  and fill out the area that I am asked to fill out and then push save, it is not saving.",
+          "closes without keeping prompt"
         ]
       },
       "acceptanceCriteria": [
-        "Backend exposes actor methods to create, read/list, update, and delete prompts, and to read/write categories (or derive categories from prompts), scoped to the caller principal.",
-        "Prompt.content is stored and returned as an HTML string without stripping inline color styling that is allowed by the app sanitizer.",
-        "Unauthenticated/anonymous users cannot read or write persisted data (must require authenticated principal).",
-        "Data returned from backend round-trips without changing stored prompt HTML beyond normal sanitation rules (no forced reset to black)."
+        "Creating a new prompt (Title + Content + at least one Category) and clicking Save results in the prompt appearing in the currently active view/filter state as soon as Save completes.",
+        "After a full page refresh and re-authentication, the newly created prompt is still present (loaded from the backend).",
+        "If the backend call fails, the dialog remains open and an error toast is shown; the prompt is not silently lost."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Update the frontend data flow to load prompts/categories from the backend after login and to save all prompt edits (including text color changes) to the backend, so that searching for a saved prompt displays the same rich-text colors originally saved.",
+      "text": "Ensure categories entered/selected in the prompt editor are persisted so that any new category created during '+ Add Prompt' appears under Favorites in the category filter bar immediately after saving the prompt and remains after refresh.",
       "target": "both",
       "source": {
         "messageIds": [
-          "recent-10"
+          "msg-1"
         ],
         "quotes": [
-          "When I add a prompt into the library it lets me change all the colors I want. Once I save it and then search for the prompt none of the text is colored. Can you fix that?"
+          "a category should be showing and when I click that category it should pop up.",
+          "It should appear right under \"Favorites\"",
+          "I can manually put in a category or pick one that exist."
         ]
       },
       "acceptanceCriteria": [
-        "After login, the app fetches prompts/categories from the backend and populates the existing Zustand stores used by the UI.",
-        "Creating a prompt, editing a prompt (including color changes), deleting, duplicating, and toggling favorite update the backend and then reflect in the UI.",
-        "Search results and prompt previews render the stored prompt content via the existing PromptContent component (sanitized HTML) and preserve text colors (do not revert to black).",
-        "localStorage auto-persist is no longer the source of truth for prompts/categories once backend persistence is enabled (no overwriting backend-sourced rich text with stale local data)."
+        "When saving a prompt that includes a brand-new category name, that category appears in the CategoryFilterBar list (under the Favorites button) without requiring a manual refresh action.",
+        "After a full page refresh and re-authentication, the new category is still present in the CategoryFilterBar list (loaded from backend).",
+        "Saving a prompt with only existing categories does not create duplicate categories in the UI list or backend."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Fix rich-text paste handling in the \"+ Add Prompt\" / prompt editor so that pasting formatted text from Microsoft Word preserves supported formatting (especially text colors) by capturing clipboard HTML when available and sanitizing it into the app’s allowed HTML subset.",
+      "text": "Make clicking a category in the CategoryFilterBar correctly filter and allow opening prompts within that category, using the currently selected view mode (list/grid/table) behavior.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-7"
+          "msg-1"
         ],
         "quotes": [
-          "Don't know, but I am bringing the text from Microsoft Word"
+          "when I click that category it should pop up.",
+          "whichever format I have chosen right next to the Newest First drop box."
         ]
       },
       "acceptanceCriteria": [
-        "Pasting from Microsoft Word into the rich text editor keeps text color formatting when the clipboard provides HTML (do not force plaintext-only paste).",
-        "The pasted content is sanitized to the app’s safe subset while preserving text color styling where present (e.g., span color styles).",
-        "Saving the prompt after a Word paste and then searching/opening the prompt shows the same colors as pasted (within supported formatting)."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Set the uploaded image as the app’s browser-tab favicon by generating the required favicon PNG sizes and ensuring the HTML favicon links reference those generated assets.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "recent-6"
-        ],
-        "quotes": [
-          "Okay - can you make this image the favicon?"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The favicon displayed in the browser tab matches the uploaded image.",
-        "frontend/index.html references the generated favicon files under /assets/generated/ for 16x16 and 32x32 PNG sizes.",
-        "No favicon changes are required beyond the main app tab/favicon behavior."
+        "After saving a prompt into a category, clicking that category filters the prompt list to show the prompt(s) in that category.",
+        "In list/grid/table view modes, selecting a prompt in the filtered results opens the existing prompt preview behavior for that view (no broken/empty preview).",
+        "The app stays on the current view after Save (no forced navigation)."
       ]
     }
   ],
   "constraints": [
     "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Do not edit files under frontend/src/components/ui (read-only).",
-    "Do not edit immutable paths listed in SYSTEM_CONTEXT (compose instead)."
+    "Do not modify files under frontend/src/components/ui or any path listed in frontend.immutablePaths."
   ],
   "nonGoals": [
-    "Adding third-party authentication providers (only Internet Identity).",
-    "Real-time collaboration or multi-user shared libraries beyond per-principal storage.",
-    "Supporting every Microsoft Word formatting feature (e.g., fonts, margins, tables); only preserve safe rich-text formatting with emphasis on text colors."
+    "Implementing new sorting modes, new view modes, or a new navigation system.",
+    "Changing authentication provider behavior (Internet Identity only).",
+    "Adding external databases or third-party storage."
   ],
   "imageRequirements": {
-    "required": [
-      "Square favicon image from the uploaded icon (favicon.dim_32x32.png)",
-      "Square favicon image from the uploaded icon (favicon.dim_16x16.png)"
-    ],
+    "required": [],
     "edits": []
   }
 }

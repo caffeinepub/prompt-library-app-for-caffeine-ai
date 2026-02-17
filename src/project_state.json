@@ -1,38 +1,39 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "App with a prompt library where users can add and search prompts; needs rich-text (color) formatting to persist via backend and display correctly in search results, and a custom favicon on the main tab.",
+  "summary": "New project",
   "architectural_notes": [
-    "Rich-text prompt content must be persisted in the backend (not UI-only) and rendered with formatting in search results.",
-    "Input should accept and preserve formatting when pasting from Microsoft Word (e.g., via HTML/RTF-to-storable format handling)."
+    "Prompts and categories must persist across refresh/reopen.",
+    "Category input supports selecting an existing category or typing a new one (auto-create if new).",
+    "After saving a prompt, the UI should remain on the current view; new category should appear under 'Favorites'.",
+    "Clicking a category should open the saved prompt(s) using the currently selected display format (as chosen next to 'Newest First')."
   ],
   "known_issues": [
-    "Saved prompt text colors/formatting are lost (reset to black) when searching/retrieving prompts."
+    "Bug: '+ Add Prompt' Save closes dialog but does not persist the new prompt/category; category does not appear under Favorites and prompt cannot be reopened via category click."
   ],
   "isFixRequest": true,
-  "imageRequirements": "## Required Images\n- Square favicon image from the uploaded icon (favicon.dim_32x32.png)\n- Square favicon image from the uploaded icon (favicon.dim_16x16.png)",
   "existing_features": [
     {
-      "id": "feature-update-the-frontend-data-flow-to-load-prompts-categories-from-the-backend-after-login-and-to-save-all-prompt-edits-including-text-color-changes-to-the-backend-so-that-searching-for-a-saved-prompt-displays-the-same-rich-text-colors-originally-saved",
-      "title": "Update the frontend data flow to load prompts/categories from the backend after login and to save all prompt edits (including text color changes) to the backend, so that searching for a saved prompt displays the same rich-text colors originally saved.",
+      "id": "feature-fix-the-add-prompt-save-flow-so-a-newly-created-prompt-is-reliably-persisted-backend-in-memory-ui-state-instead-of-the-dialog-closing-with-the-prompt-missing",
+      "title": "Fix the '+ Add Prompt' Save flow so a newly created prompt is reliably persisted (backend + in-memory UI state) instead of the dialog closing with the prompt missing.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-categories-entered-selected-in-the-prompt-editor-are-persisted-so-that-any-new-category-created-during-add-prompt-appears-under-favorites-in-the-category-filter-bar-immediately-after-saving-the-prompt-and-remains-after-refresh",
+      "title": "Ensure categories entered/selected in the prompt editor are persisted so that any new category created during '+ Add Prompt' appears under Favorites in the category filter bar immediately after saving the prompt and remains after refresh.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-fix-rich-text-paste-handling-in-the-add-prompt-prompt-editor-so-that-pasting-formatted-text-from-microsoft-word-preserves-supported-formatting-especially-text-colors-by-capturing-clipboard-html-when-available-and-sanitizing-it-into-the-app-s-allowed-html-subset",
-      "title": "Fix rich-text paste handling in the \"+ Add Prompt\" / prompt editor so that pasting formatted text from Microsoft Word preserves supported formatting (especially text colors) by capturing clipboard HTML when available and sanitizing it into the app’s allowed HTML subset.",
+      "id": "feature-make-clicking-a-category-in-the-categoryfilterbar-correctly-filter-and-allow-opening-prompts-within-that-category-using-the-currently-selected-view-mode-list-grid-table-behavior",
+      "title": "Make clicking a category in the CategoryFilterBar correctly filter and allow opening prompts within that category, using the currently selected view mode (list/grid/table) behavior.",
       "reqIds": [
         "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-set-the-uploaded-image-as-the-app-s-browser-tab-favicon-by-generating-the-required-favicon-png-sizes-and-ensuring-the-html-favicon-links-reference-those-generated-assets",
-      "title": "Set the uploaded image as the app’s browser-tab favicon by generating the required favicon PNG sizes and ensuring the HTML favicon links reference those generated assets.",
-      "reqIds": [
-        "REQ-4"
       ],
       "version": 1
     }
@@ -40,29 +41,9 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Preserve rich-text formatting (especially text colors) when saving prompts to the backend and retrieving/displaying them in search results.",
+      "summary": "Fix '+ Add Prompt' Save not persisting prompts/categories; ensure new category appears under Favorites and prompts open correctly per selected display format",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Support pasting formatted text from Microsoft Word into \"+ Add Prompt\" and store/read the pasted formatting (colors, etc.) as-is.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Set the provided image as the favicon for the main tab only (not globally across all pages).",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Implement backend persistence for the prompt library so that prompts (including rich-text HTML content with color formatting), categories, and related metadata are stored per authenticated user (Internet Identity principal) and can be loaded back reliably after refresh/search.",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "status": "pending"
+      "status": "in_progress"
     }
   ],
   "projectName": "Prompt Library",

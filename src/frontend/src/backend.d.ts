@@ -15,6 +15,9 @@ export interface Prompt {
     tags: Array<string>;
     author: string;
 }
+export interface UserProfile {
+    name: string;
+}
 export interface Category {
     id: string;
     name: string;
@@ -31,10 +34,13 @@ export interface backendInterface {
     deletePrompt(promptId: string): Promise<void>;
     getAllCategories(): Promise<Array<Category>>;
     getAllPrompts(): Promise<Array<Prompt>>;
+    getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCategory(categoryId: string): Promise<Category | null>;
     getPrompt(promptId: string): Promise<Prompt | null>;
+    getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
+    saveCallerUserProfile(profile: UserProfile): Promise<void>;
     saveCategory(category: Category): Promise<void>;
     savePrompt(prompt: Prompt): Promise<void>;
     searchPrompts(searchTerm: string): Promise<Array<Prompt>>;

@@ -26,6 +26,7 @@ export const Prompt = IDL.Record({
   'tags' : IDL.Vec(IDL.Text),
   'author' : IDL.Text,
 });
+export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
@@ -34,10 +35,17 @@ export const idlService = IDL.Service({
   'deletePrompt' : IDL.Func([IDL.Text], [], []),
   'getAllCategories' : IDL.Func([], [IDL.Vec(Category)], ['query']),
   'getAllPrompts' : IDL.Func([], [IDL.Vec(Prompt)], ['query']),
+  'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getCategory' : IDL.Func([IDL.Text], [IDL.Opt(Category)], ['query']),
   'getPrompt' : IDL.Func([IDL.Text], [IDL.Opt(Prompt)], ['query']),
+  'getUserProfile' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(UserProfile)],
+      ['query'],
+    ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'saveCategory' : IDL.Func([Category], [], []),
   'savePrompt' : IDL.Func([Prompt], [], []),
   'searchPrompts' : IDL.Func([IDL.Text], [IDL.Vec(Prompt)], ['query']),
@@ -64,6 +72,7 @@ export const idlFactory = ({ IDL }) => {
     'tags' : IDL.Vec(IDL.Text),
     'author' : IDL.Text,
   });
+  const UserProfile = IDL.Record({ 'name' : IDL.Text });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
@@ -72,10 +81,17 @@ export const idlFactory = ({ IDL }) => {
     'deletePrompt' : IDL.Func([IDL.Text], [], []),
     'getAllCategories' : IDL.Func([], [IDL.Vec(Category)], ['query']),
     'getAllPrompts' : IDL.Func([], [IDL.Vec(Prompt)], ['query']),
+    'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getCategory' : IDL.Func([IDL.Text], [IDL.Opt(Category)], ['query']),
     'getPrompt' : IDL.Func([IDL.Text], [IDL.Opt(Prompt)], ['query']),
+    'getUserProfile' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(UserProfile)],
+        ['query'],
+      ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'saveCategory' : IDL.Func([Category], [], []),
     'savePrompt' : IDL.Func([Prompt], [], []),
     'searchPrompts' : IDL.Func([IDL.Text], [IDL.Vec(Prompt)], ['query']),

@@ -18,11 +18,35 @@ export function CategoryPicker({ selectedCategories, onCategoriesChange }: Categ
   const addCategory = useCategoryStore((state) => state.addCategory);
 
   const handleAddCategory = () => {
-    if (newCategoryName.trim()) {
-      addCategory(newCategoryName.trim());
-      onCategoriesChange([...selectedCategories, newCategoryName.trim()]);
-      setNewCategoryName('');
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return;
+    
+    // Check if category already exists (case-insensitive)
+    const exists = categories.some(
+      cat => cat.toLowerCase() === trimmed.toLowerCase()
+    );
+    
+    if (exists) {
+      // Find the existing category with correct casing
+      const existingCategory = categories.find(
+        cat => cat.toLowerCase() === trimmed.toLowerCase()
+      );
+      
+      // Select it if not already selected
+      if (existingCategory && !selectedCategories.includes(existingCategory)) {
+        onCategoriesChange([...selectedCategories, existingCategory]);
+      }
+    } else {
+      // Add new category to store
+      addCategory(trimmed);
+      
+      // Select the new category (avoid duplicates in selection)
+      if (!selectedCategories.some(cat => cat.toLowerCase() === trimmed.toLowerCase())) {
+        onCategoriesChange([...selectedCategories, trimmed]);
+      }
     }
+    
+    setNewCategoryName('');
   };
 
   const handleToggleCategory = (category: string) => {
