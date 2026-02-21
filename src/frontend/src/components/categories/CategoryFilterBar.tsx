@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Star, Pencil, Trash2, Check, X, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -94,14 +93,14 @@ export function CategoryFilterBar({
 
   return (
     <>
-      <ScrollArea className="w-full">
-        <div className="flex items-center gap-2 pb-2">
+      <div className="w-full">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2">
           {/* Favorites Toggle */}
           <Button
             variant={showFavoritesOnly ? 'default' : 'outline'}
             size="sm"
             onClick={onFavoritesToggle}
-            className="shrink-0"
+            className="w-full"
           >
             <Star className={`h-4 w-4 mr-2 ${showFavoritesOnly ? 'fill-current' : ''}`} />
             Favorites
@@ -114,18 +113,11 @@ export function CategoryFilterBar({
               size="sm"
               onClick={handleCreateClick}
               disabled={!backendReady}
-              className="shrink-0"
+              className="w-full"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create Category
             </Button>
-          )}
-
-          {/* Backend Error State */}
-          {backendError && (
-            <div className="text-xs text-destructive px-2 py-1 bg-destructive/10 rounded">
-              Unable to load categories: {backendStatusMessage || 'Connection error'}
-            </div>
           )}
 
           {/* Category Badges */}
@@ -138,7 +130,7 @@ export function CategoryFilterBar({
             >
               <Badge
                 variant={selectedCategory === category ? 'default' : 'outline'}
-                className="cursor-pointer shrink-0 pr-8"
+                className="cursor-pointer w-full justify-center pr-8 h-9 text-sm"
                 onClick={() => onCategorySelect(selectedCategory === category ? null : category)}
               >
                 {category}
@@ -168,7 +160,14 @@ export function CategoryFilterBar({
             </div>
           ))}
         </div>
-      </ScrollArea>
+
+        {/* Backend Error State */}
+        {backendError && (
+          <div className="text-xs text-destructive px-2 py-1 bg-destructive/10 rounded mt-2">
+            Unable to load categories: {backendStatusMessage || 'Connection error'}
+          </div>
+        )}
+      </div>
 
       {/* Rename Dialog */}
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>

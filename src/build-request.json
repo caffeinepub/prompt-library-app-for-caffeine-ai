@@ -1,145 +1,65 @@
 {
   "kind": "build_request",
-  "title": "Persist per-user categories in backend and load them under Favorites on login",
+  "title": "Fix category display to show all categories in responsive grid",
   "projectName": "Prompt Library",
-  "priority": "normal",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Ensure categories are persisted per authenticated user in the backend and are returned for that same user after logging out and logging back in.",
-      "target": "backend",
+      "text": "Modify the category filter bar to display all categories in a responsive grid layout that wraps to multiple rows, ensuring all 22-23 categories are visible on screen simultaneously without horizontal overflow",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5",
-          "msg-6"
+          "msg-7",
+          "msg-9"
         ],
         "quotes": [
-          "Maybe make a create category below the \"Favorites\" - but every user has to make their own categories. But once made they should always show unless deleted.",
-          "Backend."
+          "I have about 22, 23 of them and there's only showing like 11",
+          "I want to see all the categories on the screen at the same time",
+          "if you want to do left to right and then bring them down once they hit the end of the screen"
         ]
       },
       "acceptanceCriteria": [
-        "When a signed-in user creates categories, logs out, and logs back in, calling the backend categories list returns the previously created categories for that user.",
-        "Categories created by User A do not appear for User B.",
-        "Backend rejects category CRUD calls from anonymous callers consistently (no silent failures)."
+        "All categories (22-23) are visible on screen without requiring horizontal scroll",
+        "Categories wrap to new rows when they reach the edge of the screen",
+        "Layout remains responsive across different screen sizes",
+        "No categories are hidden off-screen to the right"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Fix backend category CRUD semantics so that category identity used by the frontend (category name strings) matches backend storage and prompt detaching/renaming logic end-to-end.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-5",
-          "msg-6"
-        ],
-        "quotes": [
-          "But once made they should always show unless deleted.",
-          "Backend."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Renaming a category updates the stored category entry and updates every prompt that references the old category name so it references the new category name.",
-        "Deleting a category detaches it from all prompts by removing that category name from each prompt’s categories array, keeps the prompts, and removes the category from backend storage.",
-        "After rename/delete, subsequent getAllCategories returns the updated category name list with no stale entries."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Persist backend state across canister upgrades for per-user prompts and categories so that user-created categories are not lost after deployment upgrades.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-5"
-        ],
-        "quotes": [
-          "But once made they should always show unless deleted."
-        ]
-      },
-      "acceptanceCriteria": [
-        "After a canister upgrade, existing users’ prompts and categories are still present.",
-        "If a migration is needed for existing stored data, it runs conditionally and does not corrupt user data."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "On successful login, automatically load categories from the backend and render them immediately below the \"Favorites\" control in the category UI.",
+      "text": "Ensure the category grid appears directly below the search bar, with Favorites and Create Category buttons positioned at the start of the category list, followed by all user-created categories",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4",
-          "msg-5"
+          "msg-9"
         ],
         "quotes": [
-          "Works great but when I log in to the app the categories are not there. I want the categories that have been created to always show below \"Favorites\"",
-          "Immediately on login, if they have been created already."
+          "they are right below the search bar. Starting from left to right, There is 'Favorites' then 'Create Category', and then the categories beginn"
         ]
       },
       "acceptanceCriteria": [
-        "After login completes and backend connectivity succeeds, the UI shows the user’s categories under the Favorites control without requiring a manual refresh.",
-        "If the backend returns categories, the categories list in the UI matches the backend list (including after a full page reload).",
-        "If backend connectivity fails, the UI displays an error state and does not misleadingly show an empty categories list as if no categories exist."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Add an always-available \"Create category\" entry directly below the \"Favorites\" control, and ensure creating a category persists it to the backend for the current user.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-5"
-        ],
-        "quotes": [
-          "Maybe make a create category below the \"Favorites\""
-        ]
-      },
-      "acceptanceCriteria": [
-        "The category UI includes a clear create-category control placed directly below Favorites.",
-        "Creating a category updates the UI immediately and persists the new category to the backend; after logout/login it still appears.",
-        "Attempting to create a duplicate category (case-insensitive) is prevented with a user-facing message in English."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Ensure all category mutations from the UI (create, rename, delete) call the backend-backed sync actions so the backend remains the source of truth after login.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-5",
-          "msg-6"
-        ],
-        "quotes": [
-          "But once made they should always show unless deleted.",
-          "Backend."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Create/rename/delete category actions from the category UI trigger backend calls and reflect success/failure to the user in English.",
-        "After any category mutation, the categories shown below Favorites remain consistent with the backend response (including after refreshFromBackend)."
+        "Category section appears immediately below the search bar",
+        "Favorites button appears first in the layout",
+        "Create Category button appears second",
+        "All user categories follow after these two buttons",
+        "All items maintain consistent visual spacing and alignment"
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo.",
-    "Do not edit files under frontend/src/components/ui or the immutable hook paths listed in SYSTEM_CONTEXT; compose them instead."
+    "Do not change the backend schema or data structure",
+    "Maintain existing category selection, creation, and deletion functionality",
+    "Preserve current search and filtering behavior"
   ],
   "nonGoals": [
-    "Global (shared) categories across users.",
-    "Third-party authentication providers other than Internet Identity.",
-    "Real-time syncing between multiple sessions/devices beyond loading on login and explicit refresh."
+    "Changing the overall app layout or navigation structure",
+    "Modifying how categories are created or managed",
+    "Altering search functionality or prompt display modes",
+    "Adding new category management features"
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

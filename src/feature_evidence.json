@@ -2,10 +2,9 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-on-successful-login-automatically-load-categories-from-the-backend-and-render-them-immediately-below-the-favorites-control-in-the-category-ui",
-      "featureTitle": "On successful login, automatically load categories from the backend and render them immediately below the \"Favorites\" control in the category UI.",
+      "featureId": "feature-modify-the-category-filter-bar-to-display-all-categories-in-a-responsive-grid-layout-that-wraps-to-multiple-rows-ensuring-all-22-23-categories-are-visible-on-screen-simultaneously-without-horizontal-overflow",
+      "featureTitle": "Modify the category filter bar to display all categories in a responsive grid layout that wraps to multiple rows, ensuring all 22-23 categories are visible on screen simultaneously without horizontal overflow",
       "files": [
-        "frontend/src/App.tsx",
         "frontend/src/components/categories/CategoryFilterBar.tsx"
       ],
       "components": [
@@ -17,17 +16,15 @@
         "authorization@4.0.0"
       ],
       "testIds": [
-        "REQ-4"
+        "REQ-1"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-an-always-available-create-category-entry-directly-below-the-favorites-control-and-ensure-creating-a-category-persists-it-to-the-backend-for-the-current-user",
-      "featureTitle": "Add an always-available \"Create category\" entry directly below the \"Favorites\" control, and ensure creating a category persists it to the backend for the current user.",
+      "featureId": "feature-ensure-the-category-grid-appears-directly-below-the-search-bar-with-favorites-and-create-category-buttons-positioned-at-the-start-of-the-category-list-followed-by-all-user-created-categories",
+      "featureTitle": "Ensure the category grid appears directly below the search bar, with Favorites and Create Category buttons positioned at the start of the category list, followed by all user-created categories",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/categories/CategoryFilterBar.tsx",
-        "frontend/src/features/backend/promptLibraryApi.ts"
+        "frontend/src/components/categories/CategoryFilterBar.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -38,27 +35,7 @@
         "authorization@4.0.0"
       ],
       "testIds": [
-        "REQ-5"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-ensure-all-category-mutations-from-the-ui-create-rename-delete-call-the-backend-backed-sync-actions-so-the-backend-remains-the-source-of-truth-after-login",
-      "featureTitle": "Ensure all category mutations from the UI (create, rename, delete) call the backend-backed sync actions so the backend remains the source of truth after login.",
-      "files": [
-        "frontend/src/components/categories/CategoryPicker.tsx",
-        "frontend/src/components/categories/ManageCategoriesDialog.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0"
-      ],
-      "testIds": [
-        "REQ-6"
+        "REQ-2"
       ],
       "confidence": "high"
     }

@@ -1,82 +1,45 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Load and manage per-user categories under Favorites after login (frontend)",
+  "title": "Fix category display to show all categories in responsive grid",
   "requirements": [
     {
-      "id": "REQ-4",
-      "summary": "After successful login and backend connectivity, load categories and render them under the Favorites control with clear error handling on connectivity failure.",
+      "id": "REQ-1",
+      "summary": "Modify the category filter bar to display all categories in a responsive grid layout that wraps to multiple rows",
       "acceptanceCriteria": [
-        "After login completes and backend connectivity succeeds, the UI shows the user’s categories under the Favorites control without requiring a manual refresh.",
-        "If the backend returns categories, the categories list in the UI matches the backend list (including after a full page reload).",
-        "If backend connectivity fails, the UI displays an error state and does not misleadingly show an empty categories list as if no categories exist."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Pass backend connectivity/loading/error state (from usePromptLibrarySync/useBackendActorStatus) into the category UI so it can render an explicit 'unable to load categories' state under Favorites when connectivity fails. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/categories/CategoryFilterBar.tsx",
-          "operation": "modify",
-          "description": "Render categories directly below the Favorites control, and add a visible inline error/blocked state under Favorites when backend connectivity is in error (instead of silently showing no categories). Use shadcn-ui primitives already in use (Button/Badge/ScrollArea/Dialog/Input/Label) to keep styling consistent. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
-          "operation": "modify",
-          "description": "Ensure initial data load sets categories into the store only after connectivity succeeds, and keep connectivityStatus/connectivityError surfaced for UI error states (no UI changes here)."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Add an always-available Create category control directly below Favorites and persist new categories to the backend for the current user with duplicate prevention messaging.",
-      "acceptanceCriteria": [
-        "The category UI includes a clear create-category control placed directly below Favorites.",
-        "Creating a category updates the UI immediately and persists the new category to the backend; after logout/login it still appears.",
-        "Attempting to create a duplicate category (case-insensitive) is prevented with a user-facing message in English."
+        "All categories (22-23) are visible on screen without requiring horizontal scroll",
+        "Categories wrap to new rows when they reach the edge of the screen",
+        "Layout remains responsive across different screen sizes",
+        "No categories are hidden off-screen to the right"
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/categories/CategoryFilterBar.tsx",
           "operation": "modify",
-          "description": "Add a 'Create category' entry directly below Favorites (input + action) that invokes a provided create handler; keep it visible even when there are zero categories. Use shadcn-ui Input/Button to match existing UI patterns, and disable or show guidance when backend is not ready. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wire the new create-category control: implement an onCreateCategory handler that (1) prevents case-insensitive duplicates with an English toast message, (2) calls usePromptLibrarySync().saveCategory for backend persistence, (3) surfaces success/failure to the user in English, and (4) keeps UI state consistent with the category store. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/features/backend/promptLibraryApi.ts",
-          "operation": "modify",
-          "description": "Align category persistence calls with the backend interface: represent categories by name strings (no synthetic id), and call saveCategory/deleteCategory using the backend’s expected parameters so created categories persist correctly for the signed-in user."
+          "description": "Replace the horizontal scrolling flex container with a responsive grid layout that wraps categories to multiple rows. Change the container from 'flex overflow-x-auto' to 'grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2' to enable wrapping behavior. Ensure all category buttons and action buttons (Favorites, Create Category) use consistent sizing and maintain their visual appearance while fitting within the grid layout."
         }
       ]
     },
     {
-      "id": "REQ-6",
-      "summary": "Ensure create/rename/delete category actions from the UI consistently use backend-synced actions and reflect success/failure to the user.",
+      "id": "REQ-2",
+      "summary": "Ensure the category grid appears directly below the search bar with proper button ordering",
       "acceptanceCriteria": [
-        "Create/rename/delete category actions from the category UI trigger backend calls and reflect success/failure to the user in English.",
-        "After any category mutation, the categories shown below Favorites remain consistent with the backend response (including after refreshFromBackend)."
+        "Category section appears immediately below the search bar",
+        "Favorites button appears first in the layout",
+        "Create Category button appears second",
+        "All user categories follow after these two buttons",
+        "All items maintain consistent visual spacing and alignment"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/backend/usePromptLibrarySync.ts",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Standardize category mutation wrappers (save/rename/delete) to return clear errors for UI messaging, and keep local stores updated only on successful backend writes to preserve backend-as-source-of-truth behavior."
+          "description": "Review the layout structure to verify that the CategoryFilterBar component is positioned immediately below the SearchInput component without extra spacing. Ensure the component hierarchy and spacing between search and category sections is minimal and consistent."
         },
         {
-          "path": "frontend/src/components/categories/ManageCategoriesDialog.tsx",
+          "path": "frontend/src/components/categories/CategoryFilterBar.tsx",
           "operation": "modify",
-          "description": "Add duplicate-prevention and user-facing English messaging for rename (case-insensitive conflicts), and ensure rename/delete failures are clearly communicated (leveraging existing toasts from sync hook where applicable). Use existing shadcn-ui dialog/input/button components. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/categories/CategoryPicker.tsx",
-          "operation": "modify",
-          "description": "When creating a new category from the prompt editor flow, call the backend-backed saveCategory action (via usePromptLibrarySync) instead of only mutating the local store; preserve existing case-insensitive duplicate prevention and add an English message when a duplicate is attempted. Use existing shadcn-ui Input/Button/Checkbox/ScrollArea components. Verify the component's usage instructions before implementing."
+          "description": "Verify and maintain the button rendering order: Favorites button first, Create Category button second, followed by all user categories. Ensure all buttons within the grid use consistent padding, height, and visual styling so they align properly in the responsive grid layout."
         }
       ]
     }

@@ -1,36 +1,27 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "User-specific categories should be persisted in the backend, load automatically on login, and always display directly below \"Favorites\" (with create-category entry in that section), remaining visible unless deleted.",
+  "summary": "A prompt library app that stores and organizes prompts by categories. Features a search bar, favorites section, and category management to help users quickly find and copy their saved prompts.",
   "architectural_notes": [
-    "Categories are per-user (not global) and must be stored in backend; client should fetch/load categories on login and render them directly below \"Favorites\"."
+    "Categories displayed in responsive grid layout with automatic wrapping to ensure all items are visible on screen",
+    "Layout order: search bar at top, then Favorites and Create Category buttons, followed by category buttons"
   ],
-  "known_issues": [
-    "On login, previously created categories are not appearing; categories need to persist per user and be loaded from backend."
-  ],
+  "known_issues": [],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-on-successful-login-automatically-load-categories-from-the-backend-and-render-them-immediately-below-the-favorites-control-in-the-category-ui",
-      "title": "On successful login, automatically load categories from the backend and render them immediately below the \"Favorites\" control in the category UI.",
+      "id": "feature-modify-the-category-filter-bar-to-display-all-categories-in-a-responsive-grid-layout-that-wraps-to-multiple-rows-ensuring-all-22-23-categories-are-visible-on-screen-simultaneously-without-horizontal-overflow",
+      "title": "Modify the category filter bar to display all categories in a responsive grid layout that wraps to multiple rows, ensuring all 22-23 categories are visible on screen simultaneously without horizontal overflow",
       "reqIds": [
-        "REQ-4"
+        "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-an-always-available-create-category-entry-directly-below-the-favorites-control-and-ensure-creating-a-category-persists-it-to-the-backend-for-the-current-user",
-      "title": "Add an always-available \"Create category\" entry directly below the \"Favorites\" control, and ensure creating a category persists it to the backend for the current user.",
+      "id": "feature-ensure-the-category-grid-appears-directly-below-the-search-bar-with-favorites-and-create-category-buttons-positioned-at-the-start-of-the-category-list-followed-by-all-user-created-categories",
+      "title": "Ensure the category grid appears directly below the search bar, with Favorites and Create Category buttons positioned at the start of the category list, followed by all user-created categories",
       "reqIds": [
-        "REQ-5"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-all-category-mutations-from-the-ui-create-rename-delete-call-the-backend-backed-sync-actions-so-the-backend-remains-the-source-of-truth-after-login",
-      "title": "Ensure all category mutations from the UI (create, rename, delete) call the backend-backed sync actions so the backend remains the source of truth after login.",
-      "reqIds": [
-        "REQ-6"
+        "REQ-2"
       ],
       "version": 1
     }
@@ -38,35 +29,42 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Persist per-user categories in backend and auto-load/display them under \"Favorites\" immediately on login (remain until deleted; include create-category entry below Favorites).",
+      "summary": "Display all categories in a responsive grid layout below search bar that wraps to multiple rows",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Ensure categories are persisted per authenticated user in the backend and are returned for that same user after logging out and logging back in.",
-      "reqIds": [
-        "REQ-1"
-      ],
+      "summary": "Search bar at the top of the app",
+      "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-3",
-      "summary": "Fix backend category CRUD semantics so that category identity used by the frontend (category name strings) matches backend storage and prompt detaching/renaming logic end-to-end.",
-      "reqIds": [
-        "REQ-2"
-      ],
+      "summary": "Favorites button below search bar",
+      "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-4",
-      "summary": "Persist backend state across canister upgrades for per-user prompts and categories so that user-created categories are not lost after deployment upgrades.",
-      "reqIds": [
-        "REQ-3"
-      ],
+      "summary": "Create Category button below search bar",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Ability to store and organize prompts by categories",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Ability to copy prompts after finding them",
+      "reqIds": [],
       "status": "pending"
     }
   ],
+  "gameProjectType": "none",
   "projectName": "Prompt Library",
   "clarification_mode": "instant",
   "clarification_rounds": 0
